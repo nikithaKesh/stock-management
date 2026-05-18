@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Management System</title>
+    
+    <!-- CSS GOES HERE -->
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; display: flex; background-color: #f4f7f6; height: 100vh; }
+
+        .sidebar { width: 250px; background-color: #2c3e50; color: white; padding: 20px; display: flex; flex-direction: column; }
+        .sidebar h2 { margin-top: 0; margin-bottom: 30px; text-align: center; }
+        .sidebar button { background: none; border: none; color: white; padding: 15px; text-align: left; font-size: 16px; cursor: pointer; border-bottom: 1px solid #34495e; transition: 0.3s; }
+        .sidebar button:hover { background-color: #34495e; }
+
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* Form Styles */
+        #stockForm { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+
+        .submit-btn, .refresh-btn { background-color: #27ae60; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px; }
+        .submit-btn:hover, .refresh-btn:hover { background-color: #219150; }
+        .refresh-btn { width: auto; margin-bottom: 20px; }
+
+        /* Table Styles */
+        .table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #2c3e50; color: white; }
+        tr:hover { background-color: #f5f5f5; }
+
+        #statusMsg { margin-top: 15px; text-align: center; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Stock Admin</h2>
+        <button onclick="showSection('dashboard')">Dashboard</button>
+        <button onclick="showSection('entry')">Stock Entry</button>
+    </div>
+
+    <div class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <h2>Inventory Dashboard</h2>
+            <button class="refresh-btn" onclick="fetchInventory()">Refresh Data</button>
+            <div class="table-container">
+                <table id="inventoryTable">
+                    <thead>
+                        <tr>
+                            <th>Location</th>
+                            <th>Item Code</th>
+                            <th>Total IN</th>
+                            <th>Total OUT</th>
+                            <th>Damaged</th>
+                            <th>Close Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be populated here by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Stock Entry Section -->
+        <section id="entry" class="section">
+            <h2>Add Stock Transaction</h2>
+            <form id="stockForm">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="date" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Location</label>
+                    <select id="location" required>
+                        <option value="">Select Location</option>
+                        <option value="HQ">HQ</option>
+                        <option value="Pamankada">Pamankada</option>
+                        <option value="Kahathuduwa">Kahathuduwa</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category" onchange="updateProducts()" required>
+                        <option value="">Select Category</option>
+                        <option value="Chemicals">Chemicals</option>
+                        <option value="Label">Label</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Product</label>
+                    <select id="product" required>
+                        <option value="">Select Category First</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Transaction Type</label>
+                    <select id="type" required>
+                        <option value="IN">IN (Add to Stock)</option>
+                        <option value="OUT">OUT (Use Stock)</option>
+                        <option value="DAMAGE">DAMAGE (Remove Stock)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="qty" min="1" required>
+                </div>
+
+                <button type="submit" class="submit-btn">Save Transaction</button>
+                <div id="statusMsg"></div>
+            </form>
+        </section>
+    </div>
+
+    <!-- JAVASCRIPT GOES HERE -->
+    <script>
+        // --- CONFIGURATION ---
+        // REPLACE THIS URL with your Google Apps Script Web App URL
+        const API_URL = "YOUR_WEB_APP_URL_HERE"; 
+
+        const productsDB = {
+            "Chemicals": [
+                "Litchi Fresh", "Hana", "Coconut Cream", "Fragrance oil Jasmine", 
+                "Triethanolamine (TEA)", "Coconut oil", "Aloe cool"
+            ],
+            "Label": [
+                "HO040 - BIS Label", "HO100 - BIS Label", "SH040 - BIS Label",
+                "NC050 - BIS Label", "GS010 - BIS Label", "BBGS01 - BIS Label"
+            ],
+            "Others": [
+                "40ml Bottle", "100ml amaya bottle", "30ml & 10ml Serum Plastic top (Nob)",
+                "Nirvana perfume box - 50ml", "Lip butter glass bottle only", "Normal Crate"
+            ]
+        };
+
+        // Set today's date automatically
+        document.getElementById('date').valueAsDate = new Date();
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            if(sectionId === 'dashboard') {
+                fetchInventory();
+            }
+        }
+
+        function updateProducts() {
+            const category = document.getElementById('category').value;
+            const productSelect = document.getElementById('product');
+            productSelect.innerHTML = '<option value="">Select Product</option>';
+            
+            if (productsDB[category]) {
+                productsDB[category].forEach(item => {
+                    let opt = document.createElement('option');
+                    opt.value = item;
+                    opt.textContent = item;
+                    productSelect.appendChild(opt);
+                });
+            }
+        }
+
+        document.getElementById('stockForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.querySelector('.submit-btn');
+            const status = document.getElementById('statusMsg');
+            
+            btn.innerText = "Saving...";
+            status.innerText = "";
+
+            const payload = {
+                date: document.getElementById('date').value,
+                location: document.getElementById('location').value,
+                category: document.getElementById('category').value,
+                itemCode: document.getElementById('product').value,
+                type: document.getElementById('type').value,
+                qty: document.getElementById('qty').value
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'addTransaction', payload: payload })
+                });
+                
+                status.innerText = "Transaction Saved Successfully!";
+                status.style.color = "green";
+                document.getElementById('qty').value = ''; 
+            } catch (error) {
+                status.innerText = "Error saving transaction.";
+                status.style.color = "red";
+            } finally {
+                btn.innerText = "Save Transaction";
+            }
+        });
+
+        async function fetchInventory() {
+            const tbody = document.querySelector('#inventoryTable tbody');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Loading data...</td></tr>';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getInventory' })
+                });
+                
+                const res = await response.json();
+                tbody.innerHTML = '';
+
+                if (res.status === 'success' && res.data.length > 0) {
+                    res.data.forEach(item => {
+                        let row = `<tr>
+                            <td>${item.location}</td>
+                            <td>${item.itemCode}</td>
+                            <td style="color:green; font-weight:bold;">${item.IN}</td>
+                            <td style="color:#d35400;">${item.OUT}</td>
+                            <td style="color:red;">${item.DAMAGE}</td>
+                            <td style="font-weight:bold;">${item.closeStock}</td>
+                        </tr>`;
+                        tbody.innerHTML += row;
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No stock data available.</td></tr>';
+                }
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Failed to load data. Please ensure API URL is correct.</td></tr>';
+            }
+        }
+    </script>
+</body>
+</html>
