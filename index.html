@@ -130,20 +130,91 @@
     <script>
         // --- CONFIGURATION ---
         // REPLACE THIS URL with your Google Apps Script Web App URL
-        const API_URL = "YOUR_WEB_APP_URL_HERE"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbxG7XSfjKd3cKuEklgkcZFPmiPgszMt6ue5Ht6bFYhPdbSz4sY8jCAhbiIW-5xtN44/exec"; 
 
         const productsDB = {
             "Chemicals": [
-                "Litchi Fresh", "Hana", "Coconut Cream", "Fragrance oil Jasmine", 
-                "Triethanolamine (TEA)", "Coconut oil", "Aloe cool"
+                "Litchi Fresh", "Hana", "Coconut Cream", "Fregrence oil dark houdini", "Tropical Sanden", 
+                "CELESTIAL ROSE", "Fragranse oil Jasmine", "Fragrance oil Sunday", "Esential Oil Avacado", 
+                "Rani Malligal", "Esential Oil Rose", "Triethanolamine (TEA)", "Khombo oil", "ET-30", 
+                "Thala thel", "Kushtraj", "Mastard Oil", "Mee thel", "Bingaraj", "ISO", "Threepala oil", 
+                "Edaru oil", "Coconut oil", "Sunset yellow", "Blue", "Chocolate Brown", "Red", "CDEA", 
+                "Glaserine", "CAPB", "LS-30", "Repoly100", "Jojoba oil", "Cetocial alchol", "Glochem Wax", 
+                "Dollor Wax", "Alpha Arbutine", "Bees Wax", "Aqua green", "Aloe cool", "DMDMH", 
+                "DECYE Gluchoside", "Sodium PCA", "Rose OTTO", "Phenoxe Ethonal", "Lichii", 
+                "Fragrance oil - body boost", "Fragrance oil - Mango", "Fragrance oil - Bamboo", 
+                "Fragrance oil - Tutti Frutti", "Diethyl phthalate (DEP)", "Olive Oil", "Glecarine", 
+                "French jasmine", "Shea butter", "CETOSTRYAl", "Walnut Shell Powder", "Nicinamide", 
+                "CADE", "DEP", "MPG", "Purfume Bis - Mantra", "Alchol -new", "Alchol - ENT", "GS-500", 
+                "Cool water", "Polo red", "Creed aventures", "Boss bottle", "Red tobaco", "Blue de", 
+                "Most wanted", "Paco rabana", "Verse err", "My way", "Gucci Bloom", "Tinogard Tl", 
+                "Polyquaternium", "Blak rose", "Galaxy GGC", "Frgrance Oil Pure nature", "Depanthnol", 
+                "Lactic acid", "Skin new", "Poly Sorbrate", "Plantercare 1200up", "Blondie SKT", 
+                "Tinogard TT", "Lannette", "90 Film Ciated Tablet", "Sodium Silicate", "Ascorbic Acid", 
+                "Tractric Acid", "Maclic Acid", "Cytric acid", "Azelic acid", "Salicylic acid", 
+                "DI Sodium", "Sodium BIcarbonate", "Carbomer 940", "Xanthan Gum", "Cosmatic colors - Oil red", 
+                "Egg yellow", "Apple green", "Wal madata Powder", "Khomba powder", "Aralu powder", 
+                "Wada kaha", "Savendara", "Rath hadun", "Kasthurui kaha", "Santal Bash", "Scrub & Butter Beats", 
+                "Cirebelle 102F", "Instant soap", "Stealic Acid", "TALC Powder", "Green tea butter", 
+                "Aque green", "Phenoxyethanol"
             ],
             "Label": [
-                "HO040 - BIS Label", "HO100 - BIS Label", "SH040 - BIS Label",
-                "NC050 - BIS Label", "GS010 - BIS Label", "BBGS01 - BIS Label"
+                "HO040 - BIS Label", "HO100 - BIS Label", "HO200 - BIS Label", "HO300 - BIS Label", 
+                "HO750 - BIS Label", "SH040 - BIS Label", "SH100 - BIS Label", "SH200 - BIS Label", 
+                "SH300 - BIS Label", "SH750 - BIS Label", "HC040 - BIS Label", "HC100 - BIS Label", 
+                "HC200 - BIS Label", "HC300 - BIS Label", "HC750 - BIS Label", "HGO040 - BIS Label", 
+                "HGO100 - BIS Label", "HGO200 - BIS Label", "HGO300 - BIS Label", "HGO750 - BIS Label", 
+                "SMS040 - BIS Label", "SMS100 - BIS Label", "SMS200 - BIS Label", "SMS300 - BIS Label", 
+                "SMS750 - BIS Label", "HLC040 - BIS Label", "HLC100 - BIS Label", "HLC200 - BIS Label", 
+                "HLC300 - BIS Label", "HLC750 - BIS Label", "DRC040 - BIS Label", "DRC100 - BIS Label", 
+                "DRC200 - BIS Label", "DRC300 - BIS Label", "DRC750 - BIS Label", "BHM040 - BIS Label", 
+                "BHM100 - BIS Label", "FW040 - BIS Label", "FW100 - BIS Label", "FW200 - BIS Label", 
+                "FW300 - BIS Label", "FW750 - BIS Label", "FL040 - BIS Label", "FL100 - BIS Label", 
+                "FL200 - BIS Label", "AT040 - BIS Label", "NC050 - BIS Label", "HDC050 - BIS Label", 
+                "GS010 - BIS Label", "GS030 - BIS Label", "ADB040 - BIS Label", "ADB100 - BIS Label", 
+                "ADB200 - BIS Label", "ADB300 - BIS Label", "ADB750 - BIS Label", "FC100 - BIS Label", 
+                "UE030 - BIS Label", "LB020 - BIS Label", "SG040 - BIS Label", "SG100 - BIS Label", 
+                "SG200 - BIS Label", "SG300 - BIS Label", "SG750 - BIS Label", "IHR100 - BIS Label", 
+                "IHR250 - BIS Label", "OPM040 - BIS Label", "OPM100 - BIS Label", "MNT010 - BIS Label", 
+                "MNT050 - BIS Label", "LVE010 - BIS Label", "LVE050 - BIS Label", "JLT010 - BIS Label", 
+                "JLT050 - BIS Label", "NVN010 - BIS Label", "NVN050 - BIS Label", "RMO010 - BIS Label", 
+                "RMO050 - BIS Label", "STK010 - BIS Label", "STK050 - BIS Label", "BD001 - BIS Label", 
+                "BD002 - BIS Label", "BD003 - BIS Label", "BW001 - BIS Label", "BW002 - BIS Label", 
+                "HA001 - BIS Label", "HA002 - BIS Label", "HA003 - BIS Label", "MD001 - BIS Label", 
+                "MD002 - BIS Label", "FD001 - BIS Label", "ED001 - BIS Label", "VT001 - BIS Label", 
+                "BX001 - BIS Label", "BX002 - BIS Label", "BX003 - BIS Label", "BX004 - BIS Label", 
+                "BX005 - BIS Label", "BX006 - BIS Label", "BBGS01 - BIS Label", "BBGL01 - BIS Label", 
+                "WBGS01 - BIS Label", "WBGL01 - BIS Label", "Brochure - BIS Label", "BBGM01 - BIS Label", 
+                "WBGM01 - BIS Label", "TP-Blck - BIS Label", "TP-Whte - BIS Label", "SBL200 - BIS Label", 
+                "SBS250 - BIS Label", "BCTB100 - BIS Label", "BCTB250 - BIS Label", "HFBL300 - L&L Label", 
+                "HGFC100 - L&L Label", "HGFS40 - L&L Label", "HGC250 - L&L Label", "LB7 - L&L Label", 
+                "L&L VT-1 - L&L Label", "L&L Box 1 - L&L Label", "L&L Box 2 - L&L Label", "HGFW200 - L&L Lable"
             ],
             "Others": [
-                "40ml Bottle", "100ml amaya bottle", "30ml & 10ml Serum Plastic top (Nob)",
-                "Nirvana perfume box - 50ml", "Lip butter glass bottle only", "Normal Crate"
+                "40ml Bottle", "100ml amaya bottle", "200ml bottle", "300ml Bottle", "750ml Bottle", 
+                "10ml Serum top bottle", "30ml & 10ml Serum Plastic top (Nob)", "Mens Purfume top", 
+                "Women's Purfume top", "Nirvana perfume box - 50ml", "Manthar purfume box - 50ml", 
+                "Juliet purfume box - 50ml", "Love purfume box - 50ml", "Romio purfume box - 50ml", 
+                "Skin talk purfume box - 50ml", "Purfume Glass Bottle - 50ml", "NC/HDC Glass bottle only", 
+                "Night cream Lid - Gold", "Gold serum bottle Only - 10ml", "Night cream Full set (Bottle, Inner cap, Lid)", 
+                "Lip butter glass bottle only", "Gold serum bottle only - 30ml", "Gold serum bottle only - 10ml", 
+                "Brown color 50ml glass jar only - round", "Lip balm plastic container - 30g", 
+                "Under eye Plastic Container - 30g", "Foot cream plastic container 100ml", 
+                "100ml/40ml Oil pump 20mm - mist pump", "Cream pump 200ml/ 300ml", "Day cream night cream inner cap", 
+                "Day cream balck cap", "Lip butter black cap 20ml", "Serum 10ml/30ml Goold top", 
+                "30ml Serum top bottle", "Foot cream top cap - black", "Lip balm plastic top cap - 30g", 
+                "Inner cap 30ml white plastc", "UE Platic black cap - 30g", "Lip balm inner cap - 20ml", 
+                "FC 50ml inner cap", "Under eye /lip butter 30g inner cap", "Flip top 100ml", "L&L Lip balm top lid", 
+                "L&L Lip balm inner cap", "L&L Lip balm Bottom cap", "250g jar inner cap - 1800", "250g Jar 270", 
+                "250g Jar cap - black - 552", "250g Jar cap - black - 504", "100g jar inner cap - 3000", 
+                "100g Jar - 650", "100g Jar cap - black - 1000", "10ml Fragrence mist pump", 
+                "50ml Fragrence mist pump", "Purfume Top locker - black - 50ml", "Purfume bottle - black - 10ml", 
+                "Purfume 50ml glass bottle", "200/300 Flip top cap", "300/750 cream pump", "Night cream inner cap only", 
+                "750ml Pump", "Normal Crate", "750 Crate", "Wheels", "Beeter 10ml", "Beeter 5ml", "Seal Machine Roll", 
+                "Soap Mold - 250g", "Soap Mold - 100g", "HBD Box", "BW Box", "AW Box", "VT Box", "MD Box", "FD Box", 
+                "W BAG - M (BOX)", "B BAG - M", "L&L LB - BOX", "BAG - S", "BAG - L", "TP - BOX", "BOX-1", "BOX-2", 
+                "BOX-3", "BOX-4", "BOX-5", "BOX-6", "BOX-7", "BOX-8", "Pump 100ml - BOX", "Pump 200ml , 300ml - BOX", 
+                "100ml pet Round Bottle"
             ]
         };
 
