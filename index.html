@@ -102,10 +102,11 @@
         .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .topbar { height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; border-bottom: 1px solid var(--border-light); }
         
-        .menu-toggle { display: none; color: var(--text-main); font-size: 22px; cursor: pointer; margin-right: 15px; }
+        .menu-toggle { display: none; color: var(--text-main); font-size: 22px; cursor: pointer; margin-right: 15px; transition: 0.2s; }
+        .menu-toggle:hover { color: var(--accent); }
 
         .search-bar { position: relative; display: flex; align-items: center; }
-        .search-bar i { position: absolute; top: 50%; transform: translateY(-50%); left: 15px; color: var(--text-muted); }
+        .search-bar .fa-search { position: absolute; top: 50%; transform: translateY(-50%); left: 15px; color: var(--text-muted); }
         .search-bar input { padding: 10px 15px 10px 45px; border-radius: 30px; border: 1px solid var(--border-accent); background: rgba(0,0,0,0.2); color: var(--text-main); width: 320px; outline: none; transition: 0.3s; }
         .search-bar input:focus { width: 380px; border-color: var(--accent); }
         
@@ -252,7 +253,8 @@
                 <button onclick="nav('entry')" id="nav-entry"><i class="fas fa-exchange-alt"></i> Stock Operations</button>
                 <button onclick="nav('history')" id="nav-history"><i class="fas fa-clock"></i> Operation Logs</button>
                 <button onclick="nav('products')" id="nav-products"><i class="fas fa-box"></i> Manage Products</button>
-                <!-- Note: Removed the buggy 'admin-only' class from the section later, keeping ID to specifically unhide this button via JS -->
+                
+                <!-- Hidden by default, JS controls access -->
                 <button onclick="nav('users')" id="nav-users" style="display:none;"><i class="fas fa-users"></i> Access Control</button>
             </div>
         </aside>
@@ -260,10 +262,12 @@
         <!-- Main Content Wrapper -->
         <main class="main-wrapper glass-panel">
             <header class="topbar">
-                <div class="search-bar">
+                <div style="display: flex; align-items: center;">
                     <i class="fas fa-bars menu-toggle" onclick="toggleSidebar()"></i>
-                    <i class="fas fa-search" style="left: 45px;"></i>
-                    <input type="text" id="global-search" placeholder="Search view..." onkeyup="globalSearch(this.value)" style="padding-left: 40px;">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="global-search" placeholder="Search view..." onkeyup="globalSearch(this.value)">
+                    </div>
                 </div>
                 <div class="topbar-actions" style="display: flex; align-items: center; gap: 10px;">
                     <div id="queue-indicator" style="display: none; color: var(--warning); font-size: 12px; margin-right: 10px;">
@@ -455,7 +459,7 @@
                     </div>
                 </section>
 
-                <!-- 6. USER MANAGEMENT (Fixed from clinging globally) -->
+                <!-- 6. USER MANAGEMENT -->
                 <section id="users" class="section">
                     <div class="controls-row">
                         <div><h2>Access Control</h2><p class="subtitle">Manage operators and system clearances connected to Spreadsheet.</p></div>
@@ -611,7 +615,7 @@
 
             // Apply Role Permissions strictly without interfering with core layout CSS
             if(currentUser.role === 'Admin') {
-                document.getElementById('nav-users').style.display = 'flex'; // Unhide Access Control Navigation Tab
+                document.getElementById('nav-users').style.display = 'flex'; 
                 document.querySelectorAll('.manager-only').forEach(el => el.style.display = 'inline-block');
             } else if (currentUser.role === 'Manager') {
                 document.querySelectorAll('.manager-only').forEach(el => el.style.display = 'inline-block');
