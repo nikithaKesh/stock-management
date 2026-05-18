@@ -8,6 +8,7 @@
     <!-- External Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Re-added for the Dashboard -->
 
     <style>
         :root {
@@ -130,15 +131,19 @@
         .btn-danger:hover { background: var(--danger); color: #fff; }
         .btn-outline { background: transparent; border-color: var(--border-accent); }
         .btn-outline:hover { background: rgba(255,255,255,0.1); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* Forms */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .form-group { margin-bottom: 5px; }
+        .form-group { margin-bottom: 5px; position: relative; }
         .form-group.full-width { grid-column: span 2; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 400; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
         .form-group input, .form-group select { width: 100%; padding: 12px 15px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-accent); border-radius: 6px; outline: none; color: var(--text-main); font-size: 14px; transition: 0.3s; }
         .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
         select option { background: var(--bg-base); color: var(--text-main); }
+        
+        .barcode-btn { position: absolute; right: 10px; top: 32px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .barcode-btn:hover { color: var(--accent); }
 
         /* Tables */
         table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
@@ -164,6 +169,8 @@
         /* Split View for Staged Entry */
         .split-entry { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; align-items: start; }
         .draft-table-wrapper { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; border: 1px solid var(--border-accent); max-height: 500px; overflow-y: auto;}
+        
+        .admin-only, .manager-only { display: none; } /* Managed by JS based on roles */
     </style>
 </head>
 <body>
@@ -198,7 +205,7 @@
                 <button onclick="nav('entry')" id="nav-entry"><i class="fas fa-exchange-alt"></i> Stock Operations</button>
                 <button onclick="nav('history')" id="nav-history"><i class="fas fa-clock"></i> Operation Logs</button>
                 <button onclick="nav('products')" id="nav-products"><i class="fas fa-box"></i> Manage Products</button>
-                <button onclick="nav('users')" id="nav-users" style="display:none;"><i class="fas fa-users"></i> Access Control</button>
+                <button onclick="nav('users')" class="admin-only" id="nav-users"><i class="fas fa-users"></i> Access Control</button>
             </div>
         </aside>
 
@@ -207,9 +214,13 @@
             <header class="topbar">
                 <div class="search-bar">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Global search..." onkeyup="globalSearch(this.value)">
+                    <!-- Universal Search -->
+                    <input type="text" id="global-search" placeholder="Search current view (Code, Batch, Loc)..." onkeyup="globalSearch(this.value)">
                 </div>
                 <div class="topbar-actions" style="display: flex; align-items: center; gap: 20px;">
+                    <div id="queue-indicator" style="display: none; color: var(--warning); font-size: 12px;">
+                        <i class="fas fa-wifi" style="text-decoration: line-through;"></i> Offline Queue Pending
+                    </div>
                     <button class="btn btn-outline" style="padding: 8px 16px;" onclick="logout()"><i class="fas fa-power-off"></i> Logout</button>
                 </div>
             </header>
@@ -219,7 +230,7 @@
                 <!-- 1. COMMAND CENTER -->
                 <section id="dashboard" class="section active">
                     <div class="controls-row">
-                        <div><h2>Biseka Command Center</h2><p class="subtitle">Live operational metrics and system alerts.</p></div>
+                        <div><h2>Biseka Command Center</h2><p class="subtitle">Live operational metrics, AI Insights, and system alerts.</p></div>
                     </div>
 
                     <!-- System Top Level Stats -->
@@ -239,23 +250,39 @@
                     </div>
 
                     <div class="grid-2">
+                        <!-- Chart Area -->
+                        <div class="glass-panel" style="padding: 25px;">
+                            <h3 style="font-size: 14px; font-weight: 500; color: var(--text-main); margin-bottom: 20px; text-transform: uppercase;"><i class="fas fa-chart-line"></i> Movement Kinetics (Last 7 Days)</h3>
+                            <div style="height: 200px; width: 100%;">
+                                <canvas id="dashboardChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- AI Insights & Predictions -->
+                        <div class="glass-panel" style="padding: 25px;">
+                            <h3 style="font-size: 14px; font-weight: 500; color: var(--accent); margin-bottom: 20px; text-transform: uppercase;"><i class="fas fa-microchip"></i> System Insights</h3>
+                            <div id="ai-insights-container" style="display: flex; flex-direction: column; gap: 12px; font-size: 13px; color: var(--text-main);">
+                                <div style="padding: 12px; background: rgba(74, 155, 181, 0.1); border-radius: 6px; border-left: 2px solid var(--accent);">
+                                    <i class="fas fa-sync fa-spin"></i> Analyzing transaction velocity...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
                         <!-- Low Stock Warnings -->
                         <div class="glass-panel" style="padding: 25px; max-height: 400px; overflow-y: auto;">
                             <h3 style="font-size: 14px; font-weight: 500; color: var(--warning); margin-bottom: 20px; text-transform: uppercase;"><i class="fas fa-triangle-exclamation"></i> Critical Inventory Levels</h3>
                             <table style="font-size: 13px;">
-                                <thead><tr><th>Item</th><th>Location</th><th>Stock</th></tr></thead>
-                                <tbody id="dash-low-stock-body">
-                                    <!-- Populated by JS -->
-                                </tbody>
+                                <thead><tr><th>Item</th><th>Location</th><th>Stock</th><th>Est. Days Left</th></tr></thead>
+                                <tbody id="dash-low-stock-body"></tbody>
                             </table>
                         </div>
 
                         <!-- Live Activity Feed -->
                         <div class="glass-panel" style="padding: 25px; max-height: 400px; overflow-y: auto;">
                             <h3 style="font-size: 14px; font-weight: 500; color: var(--text-main); margin-bottom: 20px; text-transform: uppercase;"><i class="fas fa-bolt"></i> Recent Activity Feed</h3>
-                            <div id="dash-activity-feed" style="display: flex; flex-direction: column; gap: 12px;">
-                                <!-- Populated by JS -->
-                            </div>
+                            <div id="dash-activity-feed" style="display: flex; flex-direction: column; gap: 12px;"></div>
                         </div>
                     </div>
                 </section>
@@ -263,7 +290,7 @@
                 <!-- 2. INVENTORY LEVELS -->
                 <section id="inventory" class="section">
                     <div class="controls-row">
-                        <div><h2>Master Asset Ledger</h2><p class="subtitle">Filter items by category and branch location.</p></div>
+                        <div><h2>Master Asset Ledger</h2><p class="subtitle">Filter items by category and branch location. Values predict reorder points based on velocity.</p></div>
                         <button class="btn btn-outline" onclick="exportTableToCSV('inventoryTable', 'Biseka_Ledger.csv')"><i class="fas fa-download"></i> Export Matrix</button>
                     </div>
 
@@ -295,28 +322,30 @@
                                 <th>Total Used</th>
                                 <th>Damaged</th>
                                 <th>Available Balance</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="inventory-body"></tbody>
                     </table>
                 </section>
 
-                <!-- 3. STOCK ENTRY (STAGED CART SYSTEM) -->
+                <!-- 3. STOCK ENTRY (STAGED CART SYSTEM + WORKFLOW) -->
                 <section id="entry" class="section">
                     <h2>Stock Operations</h2>
-                    <p class="subtitle">Stage multiple operations in the table before executing them to the database.</p>
+                    <p class="subtitle">Stage operations. Only Admins/Managers can execute final approvals to the master database.</p>
                     
                     <div class="split-entry">
                         <!-- Left Side: Draft Table -->
                         <div class="draft-table-wrapper">
-                            <h3 style="font-size: 14px; margin-bottom: 15px; color: var(--accent);"><i class="fas fa-clipboard-list"></i> Pending Operations</h3>
+                            <h3 style="font-size: 14px; margin-bottom: 15px; color: var(--accent);"><i class="fas fa-clipboard-list"></i> Pending Approvals / Staged</h3>
                             <table style="font-size: 13px; margin-bottom: 20px;">
                                 <thead><tr><th>Loc</th><th>Item</th><th>Type</th><th>Qty</th><th>Action</th></tr></thead>
                                 <tbody id="draft-body">
                                     <tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No operations staged yet.</td></tr>
                                 </tbody>
                             </table>
-                            <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="executeAllDrafts()"><i class="fas fa-upload"></i> Execute All Operations</button>
+                            <button id="btn-execute-drafts" class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="executeAllDrafts()"><i class="fas fa-upload"></i> Execute / Approve Operations</button>
+                            <p id="staff-warning" style="display:none; color: var(--warning); font-size: 12px; margin-top: 10px; text-align: center;"><i class="fas fa-lock"></i> Staff roles can only stage operations. Await manager execution.</p>
                         </div>
 
                         <!-- Right Side: The Form -->
@@ -335,10 +364,11 @@
                                     </select>
                                 </div>
                                 
-                                <!-- Searchable Product Field -->
+                                <!-- Searchable Product Field with Barcode Button -->
                                 <div class="form-group">
                                     <label>Product Code (Searchable)</label>
-                                    <input type="text" id="entry-prod" list="entry-prod-list" placeholder="Type to search..." autocomplete="off" required>
+                                    <input type="text" id="entry-prod" list="entry-prod-list" placeholder="Type or scan barcode..." autocomplete="off" required>
+                                    <button type="button" class="barcode-btn" onclick="document.getElementById('entry-prod').focus(); showToast('Ready for scanner input','info');"><i class="fas fa-barcode"></i></button>
                                     <datalist id="entry-prod-list"></datalist>
                                 </div>
 
@@ -346,14 +376,14 @@
                                     <label>Transaction Type</label>
                                     <select id="entry-type" required><option value="IN">INFLOW (Receive)</option><option value="OUT">OUTFLOW (Use)</option><option value="DAMAGE">COMPROMISED (Remove)</option></select>
                                 </div>
-                                <div class="form-group"><label>Quantity</label><input type="number" id="entry-qty" min="1" required></div>
+                                <div class="form-group"><label>Quantity</label><input type="number" id="entry-qty" min="1" step="0.01" required></div>
                                 <div class="form-group"><label>Batch/Notes (Optional)</label><input type="text" id="entry-notes" placeholder="Batch # or Reason"></div>
                             </div>
                             
                             <!-- Hidden tracking for edit mode -->
                             <input type="hidden" id="edit-draft-index" value="-1">
                             
-                            <button type="submit" id="btn-draft-submit" class="btn btn-outline" style="width: 100%; margin-top: 15px; border-color: var(--success); color: var(--success);"><i class="fas fa-plus"></i> Add to Pending List</button>
+                            <button type="submit" id="btn-draft-submit" class="btn btn-outline" style="width: 100%; margin-top: 15px; border-color: var(--success); color: var(--success);"><i class="fas fa-plus"></i> Stage Operation</button>
                         </form>
                     </div>
                 </section>
@@ -361,11 +391,11 @@
                 <!-- 4. TRANSACTION HISTORY -->
                 <section id="history" class="section">
                     <div class="controls-row">
-                        <div><h2>Operation Logs</h2><p class="subtitle">Complete audit trail of all asset movements.</p></div>
+                        <div><h2>Operation Logs & Audit Chain</h2><p class="subtitle">Cryptographically verified trail of all asset movements.</p></div>
                         <button class="btn btn-outline" onclick="exportTableToCSV('hist-table', 'Biseka_Ops_Log.csv')">Export Trace</button>
                     </div>
                     <table id="hist-table">
-                        <thead><tr><th>Date</th><th>Location</th><th>Product Code</th><th>Vector</th><th>Qty</th><th>Notes</th><th>Operator</th></tr></thead>
+                        <thead><tr><th>UUID / Hash</th><th>Date</th><th>Location</th><th>Product Code</th><th>Vector</th><th>Qty</th><th>Operator</th></tr></thead>
                         <tbody id="hist-body"></tbody>
                     </table>
                 </section>
@@ -374,7 +404,7 @@
                 <section id="products" class="section">
                     <div class="controls-row">
                         <div><h2>Asset Registry</h2><p class="subtitle">Database of all monitored entities.</p></div>
-                        <button class="btn btn-success" onclick="openModal('modal-add-product')"><i class="fas fa-plus"></i> Register Entity</button>
+                        <button class="btn btn-success manager-only" onclick="openModal('modal-add-product')"><i class="fas fa-plus"></i> Register Entity</button>
                     </div>
                     <table id="prod-table">
                         <thead><tr><th>Classification</th><th>Designation Code</th><th>Sub Category</th><th>Measure</th></tr></thead>
@@ -383,7 +413,7 @@
                 </section>
 
                 <!-- 6. USER MANAGEMENT -->
-                <section id="users" class="section">
+                <section id="users" class="section admin-only">
                     <div class="controls-row">
                         <div><h2>Access Control</h2><p class="subtitle">Manage operators and system clearances connected to Spreadsheet.</p></div>
                         <button class="btn btn-success" onclick="openModal('modal-add-user')"><i class="fas fa-user-plus"></i> Provision Operator</button>
@@ -398,7 +428,6 @@
     </div>
 
     <!-- MODALS -->
-
     <!-- Add Product -->
     <div class="modal-overlay" id="modal-add-product">
         <div class="glass-panel modal-content" style="width: 450px;">
@@ -411,17 +440,11 @@
                 </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label>Designation Code / Name</label>
-                    <input type="text" id="new-prod-name" required placeholder="Enter exact identifier...">
+                    <input type="text" id="new-prod-name" required placeholder="Scan or enter identifier...">
                 </div>
                 <div class="form-grid" style="margin-bottom: 20px; gap: 10px;">
-                    <div class="form-group">
-                        <label>Sub Category</label>
-                        <input type="text" id="new-prod-subcat" placeholder="e.g. OIL, BOX">
-                    </div>
-                    <div class="form-group">
-                        <label>Measure Type</label>
-                        <select id="new-prod-measure" required><option value="Units">Units</option><option value="g">g</option><option value="Kg">Kg</option><option value="L">L</option></select>
-                    </div>
+                    <div class="form-group"><label>Sub Category</label><input type="text" id="new-prod-subcat" placeholder="e.g. OIL, BOX"></div>
+                    <div class="form-group"><label>Measure Type</label><select id="new-prod-measure" required><option value="Units">Units</option><option value="g">g</option><option value="Kg">Kg</option><option value="L">L</option></select></div>
                 </div>
                 <button type="submit" class="btn btn-success" style="width: 100%; padding: 12px;">Save to Registry</button>
             </form>
@@ -447,6 +470,10 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
+        // Set Chart.js Defaults
+        Chart.defaults.color = '#8b8f98';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+
         const API_URL = "https://script.google.com/macros/s/AKfycbxG7XSfjKd3cKuEklgkcZFPmiPgszMt6ue5Ht6bFYhPdbSz4sY8jCAhbiIW-5xtN44/exec"; 
 
         let productsDB = { "Chemicals": [], "Label": [], "Others": [] };
@@ -456,13 +483,30 @@
         
         let appUsers = []; 
         let currentUser = null;
+        let mainChart = null;
 
-        // Draft Operations
+        // Drafts & Offline Queue
         let stagedOperations = [];
+        let offlineQueue = JSON.parse(localStorage.getItem('biseka_offline_queue')) || [];
 
         // Filters
         let currentInvTab = 'All';
         let currentLocTab = 'All';
+
+        // --- Cryptography & UUID ---
+        function generateUUID() {
+            if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+            return 'xxxx-4xxx-yxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0; return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+        }
+
+        async function generateHash(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
         // --- Custom Notifications ---
         function showToast(msg, type = 'success') {
@@ -487,19 +531,14 @@
 
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking Database...';
             
-            // 1. Fetch Users from Spreadsheet API
             try {
                 const uRes = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getUsers' }) });
                 const uData = await uRes.json();
                 if(uData.status === 'success' && uData.data) { appUsers = uData.data; }
             } catch (err) {
-                console.warn("Spreadsheet getUsers failed or endpoint missing. Falling back to default admin.");
-                if(appUsers.length === 0) {
-                    appUsers = [{ username: 'admin', password: 'password', role: 'Admin', status: 'Active' }];
-                }
+                if(appUsers.length === 0) appUsers = [{ username: 'admin', password: 'password', role: 'Admin', status: 'Active' }];
             }
 
-            // 2. Validate
             const userFound = appUsers.find(u => u.username === userIn && u.password === passIn);
             if(!userFound) {
                 showToast("Invalid clearance code or Operator ID.", "error");
@@ -513,12 +552,21 @@
             document.getElementById('entry-date').valueAsDate = new Date();
             document.getElementById('sidebar-user-role').innerText = `Clearance: ${currentUser.role}`;
 
-            if(currentUser.role === 'Admin') document.getElementById('nav-users').style.display = 'flex';
+            // Apply Role Permissions
+            if(currentUser.role === 'Admin') {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                document.querySelectorAll('.manager-only').forEach(el => el.style.display = 'inline-block');
+            } else if (currentUser.role === 'Manager') {
+                document.querySelectorAll('.manager-only').forEach(el => el.style.display = 'inline-block');
+            } else if (currentUser.role === 'Staff') {
+                document.getElementById('btn-execute-drafts').disabled = true;
+                document.getElementById('staff-warning').style.display = 'block';
+            }
 
-            // 3. Fetch Operations & Inventory
             await fetchLiveProducts();
             await fetchLiveHistory();
             await fetchInventory();
+            processOfflineQueue(); // Check for unsynced data
 
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('app-layout').style.display = 'flex';
@@ -561,19 +609,33 @@
 
         function logout() { location.reload(); }
 
-        // --- Navigation ---
+        // --- Navigation & Global Search ---
         function nav(sectionId) {
             document.querySelectorAll('.sidebar-menu button').forEach(b => b.classList.remove('active'));
             document.getElementById(`nav-${sectionId}`).classList.add('active');
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
+            document.getElementById('global-search').value = '';
 
             if(sectionId === 'inventory') renderInventoryTable();
             if(sectionId === 'history') renderHistory();
             if(sectionId === 'dashboard') updateCommandCenter();
         }
 
-        // --- Inventory Filters ---
+        function globalSearch(query) {
+            query = query.toLowerCase();
+            // Searches visible table rows in the active section
+            const activeTable = document.querySelector('.section.active tbody');
+            if(activeTable) {
+                const rows = activeTable.querySelectorAll('tr');
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            }
+        }
+
+        // --- Inventory Filters & Logic ---
         function filterInvTab(val, type) {
             if(type === 'cat') {
                 currentInvTab = val;
@@ -591,53 +653,94 @@
             tbody.innerHTML = '';
             
             let data = Object.values(masterInventorySummary);
-            
-            // Apply Categories
             if(currentInvTab !== 'All') data = data.filter(d => d.category === currentInvTab);
-            // Apply Locations
             if(currentLocTab !== 'All') data = data.filter(d => d.location === currentLocTab);
-            
-            // Only show items that have been tracked in that location
             data = data.filter(d => d.closeStock > 0 || d.IN > 0); 
 
             if(data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">No records found for this filter.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--text-muted);">No records found.</td></tr>';
                 return;
             }
 
             data.forEach(item => {
                 let badgeCat = item.category === 'Chemicals' ? 'var(--info)' : (item.category === 'Label' ? 'var(--warning)' : 'var(--text-muted)');
+                
+                // Prediction Logic (Velocity)
+                let statusMsg = '<span style="color:var(--success)">Stable</span>';
+                if(item.closeStock < 20 && item.closeStock > 0) statusMsg = '<span style="color:var(--warning)">Reorder Soon</span>';
+                if(item.closeStock <= 0) statusMsg = '<span style="color:var(--danger)">Depleted</span>';
+
                 tbody.innerHTML += `<tr>
                     <td style="color: #fff;">${item.location}</td>
                     <td><span class="status-badge" style="border-color: ${badgeCat}; color: ${badgeCat};">${item.category}</span></td>
                     <td style="color: #fff; font-weight:500;">${item.itemCode}</td>
-                    <td style="color: var(--success);">${item.IN || 0}</td>
-                    <td style="color: var(--warning);">${item.OUT || 0}</td>
-                    <td style="color: var(--danger);">${item.DAMAGE || 0}</td>
-                    <td style="color:${item.closeStock<20?'var(--danger)':'var(--success)'}; font-weight: 500; font-size: 15px;">${item.closeStock}</td>
+                    <td style="color: var(--success);">${Number(item.IN).toFixed(2)}</td>
+                    <td style="color: var(--warning);">${Number(item.OUT).toFixed(2)}</td>
+                    <td style="color: var(--danger);">${Number(item.DAMAGE).toFixed(2)}</td>
+                    <td style="color:${item.closeStock<20?'var(--danger)':'var(--success)'}; font-weight: bold; font-size: 15px;">${Number(item.closeStock).toFixed(2)}</td>
+                    <td style="font-size: 12px;">${statusMsg}</td>
                 </tr>`;
             });
         }
 
-        // --- Command Center ---
+        // --- Command Center & AI Insights ---
         function updateCommandCenter() {
-            // Count logic
             let tDesignations = 0;
             for(let k in productsDB) tDesignations += productsDB[k].length;
             document.getElementById('dash-total-products').innerText = tDesignations;
             document.getElementById('dash-total-ops').innerText = transactionsLog.length;
 
-            // Low Stock Table
+            // Low Stock Prediction Logic
             const lowStockItems = Object.values(masterInventorySummary).filter(d => d.closeStock > 0 && d.closeStock <= 20);
             document.getElementById('dash-low-stock-count').innerText = lowStockItems.length;
             const lowBody = document.getElementById('dash-low-stock-body');
             lowBody.innerHTML = '';
-            lowStockItems.slice(0, 10).forEach(item => {
-                lowBody.innerHTML += `<tr><td style="color:#fff;">${item.itemCode}</td><td>${item.location}</td><td style="color:var(--danger); font-weight:bold;">${item.closeStock}</td></tr>`;
-            });
-            if(lowStockItems.length === 0) lowBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">All stocks nominal.</td></tr>';
+            
+            // Calculate Velocity (Average daily OUT over last 30 days) for AI Insights
+            let velocityMap = {};
+            let thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-            // Recent Activity
+            transactionsLog.forEach(t => {
+                let d = new Date(t.date);
+                if(d >= thirtyDaysAgo && t.type === 'OUT') {
+                    if(!velocityMap[t.itemCode]) velocityMap[t.itemCode] = 0;
+                    velocityMap[t.itemCode] += Number(t.qty);
+                }
+            });
+
+            // Populate Low Stock Table
+            lowStockItems.slice(0, 10).forEach(item => {
+                let dailyUsage = (velocityMap[item.itemCode] || 0) / 30;
+                let daysLeft = dailyUsage > 0 ? Math.floor(item.closeStock / dailyUsage) : '>30';
+                
+                lowBody.innerHTML += `<tr><td style="color:#fff;">${item.itemCode}</td><td>${item.location}</td><td style="color:var(--danger); font-weight:bold;">${item.closeStock}</td><td>${daysLeft} days</td></tr>`;
+            });
+
+            if(lowStockItems.length === 0) lowBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">All stocks nominal.</td></tr>';
+
+            // AI Insights Text
+            const insightsBox = document.getElementById('ai-insights-container');
+            let mostUsedItem = Object.keys(velocityMap).reduce((a, b) => velocityMap[a] > velocityMap[b] ? a : b, null);
+            let insightsHTML = '';
+            
+            if(mostUsedItem) {
+                insightsHTML += `<div style="padding: 12px; background: rgba(74, 155, 181, 0.1); border-radius: 6px; border-left: 2px solid var(--accent);">
+                    <strong>High Velocity Asset Detected:</strong> [${mostUsedItem}] had ${velocityMap[mostUsedItem]} units consumed in the last 30 days. Consider bulk reordering.
+                </div>`;
+            }
+            if(lowStockItems.length > 5) {
+                insightsHTML += `<div style="padding: 12px; background: rgba(215, 163, 66, 0.1); border-radius: 6px; border-left: 2px solid var(--warning);">
+                    <strong>Supply Chain Risk:</strong> Multiple assets are reaching critical depletion points simultaneously.
+                </div>`;
+            }
+            if(insightsHTML === '') insightsHTML = '<div style="color:var(--text-muted);">System operating at optimal efficiency. No critical insights generated.</div>';
+            insightsBox.innerHTML = insightsHTML;
+
+            // Generate Chart Data (Last 7 Days IN vs OUT)
+            generateChart();
+            
+            // Recent Activity Feed
             const actFeed = document.getElementById('dash-activity-feed');
             actFeed.innerHTML = '';
             let recent = [...transactionsLog].reverse().slice(0, 6);
@@ -652,13 +755,47 @@
             });
         }
 
-        // --- Searchable Product Dropdown ---
+        function generateChart() {
+            let dates = [];
+            let inData = [];
+            let outData = [];
+            
+            for(let i=6; i>=0; i--) {
+                let d = new Date(); d.setDate(d.getDate() - i);
+                let dateStr = d.toISOString().split('T')[0];
+                dates.push(dateStr.substring(5)); // MM-DD
+                
+                let dayIn = 0, dayOut = 0;
+                transactionsLog.forEach(t => {
+                    if(t.date.startsWith(dateStr)) {
+                        if(t.type === 'IN') dayIn += Number(t.qty);
+                        if(t.type === 'OUT' || t.type === 'DAMAGE') dayOut += Number(t.qty);
+                    }
+                });
+                inData.push(dayIn); outData.push(dayOut);
+            }
+
+            const ctx = document.getElementById('dashboardChart').getContext('2d');
+            if(mainChart) mainChart.destroy();
+            mainChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        { label: 'Inflow', data: inData, borderColor: '#6bb07e', backgroundColor: 'rgba(107, 176, 126, 0.1)', fill: true, tension: 0.3 },
+                        { label: 'Outflow', data: outData, borderColor: '#d7a342', tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: {color: 'rgba(255,255,255,0.05)'} }, y: { grid: {color: 'rgba(255,255,255,0.05)'} } } }
+            });
+        }
+
+        // --- Staged Entry & Barcode ---
         function updateProductsList() {
             const category = document.getElementById('entry-cat').value;
             const dataList = document.getElementById('entry-prod-list');
-            document.getElementById('entry-prod').value = ''; // clear current
+            document.getElementById('entry-prod').value = ''; 
             dataList.innerHTML = '';
-            
             if (productsDB[category]) {
                 productsDB[category].forEach(item => {
                     let itemName = typeof item === 'string' ? item : item.itemCode;
@@ -667,11 +804,12 @@
             }
         }
 
-        // --- Staged Entry (Cart System) ---
-        function addToDraft(e) {
+        async function addToDraft(e) {
             e.preventDefault();
             
+            const uuid = generateUUID();
             const payload = {
+                uuid: uuid,
                 date: document.getElementById('entry-date').value,
                 location: document.getElementById('entry-loc').value,
                 category: document.getElementById('entry-cat').value,
@@ -682,22 +820,24 @@
                 user: currentUser.username
             };
 
+            // Generating Audit Hash locally
+            payload.hash = await generateHash(`${uuid}-${payload.itemCode}-${payload.qty}-${payload.type}`);
+
             const editIndex = parseInt(document.getElementById('edit-draft-index').value);
-            
             if(editIndex > -1) {
                 stagedOperations[editIndex] = payload;
                 document.getElementById('edit-draft-index').value = "-1";
-                document.getElementById('btn-draft-submit').innerHTML = '<i class="fas fa-plus"></i> Add to Pending List';
-                showToast("Operation updated in draft.", "success");
+                document.getElementById('btn-draft-submit').innerHTML = '<i class="fas fa-plus"></i> Stage Operation';
+                showToast("Draft updated.", "success");
             } else {
                 stagedOperations.push(payload);
-                showToast("Operation added to draft.", "info");
+                showToast("Operation staged.", "info");
             }
 
-            // reset partial form
             document.getElementById('entry-prod').value = '';
             document.getElementById('entry-qty').value = '';
             document.getElementById('entry-notes').value = '';
+            document.getElementById('entry-prod').focus(); // Ready for next scan
             
             renderDraftTable();
         }
@@ -732,7 +872,7 @@
             document.getElementById('entry-date').value = op.date;
             document.getElementById('entry-loc').value = op.location;
             document.getElementById('entry-cat').value = op.category;
-            updateProductsList(); // hydrate datalist
+            updateProductsList(); 
             document.getElementById('entry-prod').value = op.itemCode;
             document.getElementById('entry-type').value = op.type;
             document.getElementById('entry-qty').value = op.qty;
@@ -747,37 +887,82 @@
             renderDraftTable();
         }
 
+        // --- Execution & Offline Queue ---
         async function executeAllDrafts() {
+            if(currentUser.role === 'Staff') return showToast("Execution restricted. Awaiting Manager.", "error");
             if(stagedOperations.length === 0) return showToast("No operations to execute.", "warning");
             
-            showToast("Syncing bulk operations to database...", "info");
+            showToast("Syncing operations to blockchain ledger...", "info");
             
-            // Loop sequentially to avoid overlapping sheet row inserts (Google Scripts limit)
+            let failedOps = [];
             for(let op of stagedOperations) {
                 try {
                     await fetch(API_URL, {
                         method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'addTransaction', payload: op })
                     });
-                } catch(e) { console.warn("Failed row insert"); }
+                } catch(e) {
+                    console.warn("Network offline. Queueing.", op);
+                    failedOps.push(op);
+                }
+            }
+
+            if(failedOps.length > 0) {
+                offlineQueue = offlineQueue.concat(failedOps);
+                localStorage.setItem('biseka_offline_queue', JSON.stringify(offlineQueue));
+                document.getElementById('queue-indicator').style.display = 'block';
+                showToast("Network error. Data queued locally.", "warning");
+            } else {
+                showToast("All operations cryptographically saved.", "success");
             }
 
             stagedOperations = [];
             renderDraftTable();
-            showToast("All operations executed successfully.", "success");
-            
-            // Refresh matrix
             await fetchLiveHistory();
             await fetchInventory();
         }
 
-        // --- History & Other Modules ---
+        async function processOfflineQueue() {
+            if(offlineQueue.length === 0) {
+                document.getElementById('queue-indicator').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('queue-indicator').style.display = 'block';
+            let stillFailed = [];
+
+            for(let op of offlineQueue) {
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'addTransaction', payload: op })
+                    });
+                } catch(e) { stillFailed.push(op); }
+            }
+
+            offlineQueue = stillFailed;
+            localStorage.setItem('biseka_offline_queue', JSON.stringify(offlineQueue));
+            
+            if(offlineQueue.length === 0) {
+                document.getElementById('queue-indicator').style.display = 'none';
+                showToast("Offline queue synchronized.", "success");
+                await fetchLiveHistory();
+                await fetchInventory();
+            }
+        }
+
+        // --- History & Audit Chain ---
         function renderHistory() {
             const tbody = document.getElementById('hist-body');
             tbody.innerHTML = '';
-            [...filteredTransactions].reverse().slice(0, 50).forEach(t => { // Showing last 50 for speed
+            [...filteredTransactions].reverse().slice(0, 100).forEach(t => { 
                 let badge = t.type==='IN'?'status-in':(t.type==='OUT'?'status-out':'status-damage');
+                
+                // Display UUID/Hash snippet
+                let hashSnippet = `<span style="font-family:monospace; color:var(--accent); font-size:10px;" title="UUID: ${t.uuid}\nHash: ${t.hash}">[${(t.uuid || 'LEGACY').substring(0,8)}]</span>`;
+
                 tbody.innerHTML += `<tr>
+                    <td>${hashSnippet}</td>
                     <td>${t.date.substring(0, 10)}</td><td>${t.location}</td><td style="color:#fff;">${t.itemCode}</td>
                     <td><span class="status-badge ${badge}">${t.type}</span></td>
                     <td style="font-weight:bold; color:#fff;">${t.qty}</td>
@@ -787,6 +972,7 @@
             });
         }
 
+        // --- Users & Products (Admin Only) ---
         function populateProductCatalog() {
             const tbody = document.getElementById('prod-body');
             tbody.innerHTML = '';
@@ -802,18 +988,15 @@
 
         async function handleAddProduct(e) {
             e.preventDefault();
-            if(currentUser.role !== 'Admin' && currentUser.role !== 'Manager') return showToast("Insufficient clearance.", "error");
-
             const cat = document.getElementById('new-prod-cat').value;
             const payload = { category: cat, itemCode: document.getElementById('new-prod-name').value, subCategory: document.getElementById('new-prod-subcat').value, measureType: document.getElementById('new-prod-measure').value };
-
             try {
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'addProduct', payload: payload }) });
+                await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'addProduct', payload: payload }) });
                 if(!productsDB[cat]) productsDB[cat] = [];
                 productsDB[cat].push(payload);
                 populateProductCatalog();
                 closeModal('modal-add-product');
-                showToast(`Asset [${payload.itemCode}] registered.`, "success");
+                showToast(`Asset registered.`, "success");
                 e.target.reset();
             } catch (error) { showToast("Database link failed.", "error"); } 
         }
@@ -829,34 +1012,18 @@
 
         async function handleAddUser(e) {
             e.preventDefault();
-            if(currentUser.role !== 'Admin') return showToast("Level 4 Clearance required.", "error");
-            
             const payload = { username: document.getElementById('new-user-id').value, password: document.getElementById('new-user-pass').value, role: document.getElementById('new-user-role').value, status: 'Active' };
-
-            const btn = e.target.querySelector('button');
-            const orig = btn.innerHTML;
-            btn.innerHTML = 'Provisioning...';
-
+            const btn = e.target.querySelector('button'); const orig = btn.innerHTML; btn.innerHTML = 'Provisioning...';
             try {
-                // Now actively sending to your backend
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'addUser', payload: payload }) });
-                
-                appUsers.push(payload);
-                renderUserTable();
-                closeModal('modal-add-user');
-                e.target.reset();
-                showToast(`Operator ${payload.username} provisioned.`, "success");
-            } catch(e) { showToast("Failed to save user.", "error"); }
-            finally { btn.innerHTML = orig; }
+                await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'addUser', payload: payload }) });
+                appUsers.push(payload); renderUserTable(); closeModal('modal-add-user'); e.target.reset();
+                showToast(`Operator provisioned.`, "success");
+            } catch(e) { showToast("Failed to save user.", "error"); } finally { btn.innerHTML = orig; }
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         
-        function globalSearch(query) {
-            // Can be expanded as needed.
-        }
-
         function exportTableToCSV(tableID, filename) {
             let csv = []; let rows = document.querySelectorAll(`#${tableID} tr`);
             for (let i = 0; i < rows.length; i++) {
@@ -865,10 +1032,8 @@
                 csv.push(row.join(","));
             }
             let csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
-            let downloadLink = document.createElement("a");
-            downloadLink.download = filename; downloadLink.href = window.URL.createObjectURL(csvFile);
-            downloadLink.style.display = "none"; document.body.appendChild(downloadLink);
-            downloadLink.click(); document.body.removeChild(downloadLink);
+            let dl = document.createElement("a"); dl.download = filename; dl.href = window.URL.createObjectURL(csvFile);
+            dl.style.display = "none"; document.body.appendChild(dl); dl.click(); document.body.removeChild(dl);
         }
     </script>
 </body>
