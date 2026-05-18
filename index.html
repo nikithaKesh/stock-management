@@ -3,133 +3,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Management System</title>
+    <title>Enterprise Stock Management System</title>
     
-    <!-- CSS GOES HERE -->
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { margin: 0; display: flex; background-color: #f4f7f6; height: 100vh; }
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f1c40f;
+            --bg: #f4f7f6;
+            --text: #333;
+            --card-bg: #fff;
+        }
 
-        .sidebar { width: 250px; background-color: #2c3e50; color: white; padding: 20px; display: flex; flex-direction: column; }
-        .sidebar h2 { margin-top: 0; margin-bottom: 30px; text-align: center; }
-        .sidebar button { background: none; border: none; color: white; padding: 15px; text-align: left; font-size: 16px; cursor: pointer; border-bottom: 1px solid #34495e; transition: 0.3s; }
-        .sidebar button:hover { background-color: #34495e; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
 
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
-        .section { display: none; }
+        /* Auth Screen */
+        #auth-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .login-box {
+            background: var(--card-bg); padding: 40px; border-radius: 8px; width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center;
+        }
+        .login-box h2 { margin-bottom: 20px; color: var(--primary); }
+
+        /* Layout */
+        #app-layout { display: none; height: 100vh; width: 100vw; flex-direction: row; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background-color: var(--primary); color: white; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid var(--secondary); background: #1a252f; }
+        .sidebar-menu { display: flex; flex-direction: column; padding: 10px 0; }
+        .sidebar-menu button { background: none; border: none; color: #bdc3c7; padding: 15px 20px; text-align: left; font-size: 15px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        .sidebar-menu button:hover, .sidebar-menu button.active { background-color: var(--secondary); color: white; border-left: 4px solid var(--accent); }
+
+        /* Main Content */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Topbar */
+        .topbar { background: var(--card-bg); height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .search-bar input { padding: 8px 15px; border-radius: 20px; border: 1px solid #ddd; width: 300px; outline: none; }
+        .topbar-actions { display: flex; gap: 20px; align-items: center; }
+        .notification-bell { position: relative; cursor: pointer; }
+        .badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; }
+
+        /* Content Area */
+        .content-area { flex: 1; padding: 30px; overflow-y: auto; }
+        .section { display: none; animation: fadeIn 0.3s; }
         .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Form Styles */
-        #stockForm { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        /* Dashboard Cards */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid var(--accent); display: flex; flex-direction: column; }
+        .stat-card.success { border-left-color: var(--success); }
+        .stat-card.danger { border-left-color: var(--danger); }
+        .stat-card.warning { border-left-color: var(--warning); }
+        .stat-card h3 { color: #7f8c8d; font-size: 14px; margin-bottom: 10px; text-transform: uppercase; }
+        .stat-card .value { font-size: 28px; font-weight: bold; color: var(--primary); }
 
-        .submit-btn, .refresh-btn { background-color: #27ae60; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px; }
-        .submit-btn:hover, .refresh-btn:hover { background-color: #219150; }
-        .refresh-btn { width: auto; margin-bottom: 20px; }
+        /* Charts & Alerts */
+        .chart-alert-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .panel { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .alert-list { list-style: none; margin-top: 15px; }
+        .alert-list li { padding: 10px; background: #fff3cd; border-left: 4px solid var(--warning); margin-bottom: 10px; border-radius: 4px; font-size: 14px; }
 
-        /* Table Styles */
-        .table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #2c3e50; color: white; }
-        tr:hover { background-color: #f5f5f5; }
+        /* Forms & Tables */
+        .controls-row { display: flex; justify-content: space-between; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; }
+        .btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; transition: 0.2s; }
+        .btn-primary { background: var(--accent); }
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .btn:hover { opacity: 0.9; }
 
-        #statusMsg { margin-top: 15px; text-align: center; font-weight: bold; }
+        .form-card { background: var(--card-bg); padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); max-width: 800px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group.full-width { grid-column: span 2; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; outline: none; }
+        
+        table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: var(--primary); color: white; font-weight: 500; font-size: 14px; }
+        tr:hover { background-color: #f9f9f9; }
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .status-in { background: #d4edda; color: #155724; }
+        .status-out { background: #fff3cd; color: #856404; }
+        .status-damage { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>Stock Admin</h2>
-        <button onclick="showSection('dashboard')">Dashboard</button>
-        <button onclick="showSection('entry')">Stock Entry</button>
-    </div>
 
-    <div class="main-content">
-        <!-- Dashboard Section -->
-        <section id="dashboard" class="section active">
-            <h2>Inventory Dashboard</h2>
-            <button class="refresh-btn" onclick="fetchInventory()">Refresh Data</button>
-            <div class="table-container">
-                <table id="inventoryTable">
-                    <thead>
-                        <tr>
-                            <th>Location</th>
-                            <th>Item Code</th>
-                            <th>Total IN</th>
-                            <th>Total OUT</th>
-                            <th>Damaged</th>
-                            <th>Close Stock</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Data will be populated here by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Stock Entry Section -->
-        <section id="entry" class="section">
-            <h2>Add Stock Transaction</h2>
-            <form id="stockForm">
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="date" required>
+    <!-- Authentication Screen -->
+    <div id="auth-screen">
+        <div class="login-box">
+            <h2><i class="fas fa-boxes"></i> Stock Admin</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group" style="text-align: left;">
+                    <label>Username</label>
+                    <input type="text" id="login-user" required value="admin">
                 </div>
-
-                <div class="form-group">
-                    <label>Location</label>
-                    <select id="location" required>
-                        <option value="">Select Location</option>
-                        <option value="HQ">HQ</option>
-                        <option value="Pamankada">Pamankada</option>
-                        <option value="Kahathuduwa">Kahathuduwa</option>
-                    </select>
+                <div class="form-group" style="text-align: left;">
+                    <label>Password</label>
+                    <input type="password" id="login-pass" required value="password">
                 </div>
-
-                <div class="form-group">
-                    <label>Category</label>
-                    <select id="category" onchange="updateProducts()" required>
-                        <option value="">Select Category</option>
-                        <option value="Chemicals">Chemicals</option>
-                        <option value="Label">Label</option>
-                        <option value="Others">Others</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Product</label>
-                    <select id="product" required>
-                        <option value="">Select Category First</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Transaction Type</label>
-                    <select id="type" required>
-                        <option value="IN">IN (Add to Stock)</option>
-                        <option value="OUT">OUT (Use Stock)</option>
-                        <option value="DAMAGE">DAMAGE (Remove Stock)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Quantity</label>
-                    <input type="number" id="qty" min="1" required>
-                </div>
-
-                <button type="submit" class="submit-btn">Save Transaction</button>
-                <div id="statusMsg"></div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login to System</button>
+                <p style="margin-top: 15px; font-size: 12px; color: #666;">Demo Credentials: admin / password</p>
             </form>
-        </section>
+        </div>
     </div>
 
-    <!-- JAVASCRIPT GOES HERE -->
+    <!-- Main Application -->
+    <div id="app-layout">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-boxes"></i> InventoryPro</h2>
+                <p style="font-size: 12px; color: #aaa; margin-top: 5px;" id="current-user-role">Role: Admin</p>
+            </div>
+            <div class="sidebar-menu">
+                <button onclick="nav('dashboard')" class="active" id="nav-dashboard"><i class="fas fa-chart-line"></i> Dashboard & Analytics</button>
+                <button onclick="nav('inventory')" id="nav-inventory"><i class="fas fa-warehouse"></i> Master Inventory</button>
+                <button onclick="nav('entry')" id="nav-entry"><i class="fas fa-plus-circle"></i> New Transaction</button>
+                <button onclick="nav('history')" id="nav-history"><i class="fas fa-history"></i> Transaction Log</button>
+                <button onclick="nav('products')" id="nav-products"><i class="fas fa-box-open"></i> Product Catalog</button>
+                <button onclick="nav('adjustments')" id="nav-adjustments"><i class="fas fa-sliders-h"></i> Audit & Adjustments</button>
+                <button onclick="nav('reports')" id="nav-reports"><i class="fas fa-file-export"></i> Export Reports</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <main class="main-wrapper">
+            
+            <!-- Top Header -->
+            <header class="topbar">
+                <div class="search-bar">
+                    <i class="fas fa-search" style="position: absolute; margin: 10px 15px; color: #999;"></i>
+                    <input type="text" placeholder="Global search products, codes..." onkeyup="globalSearch(this.value)" style="padding-left: 40px;">
+                </div>
+                <div class="topbar-actions">
+                    <div class="notification-bell" onclick="alert('Notifications Module\n- 3 Items low in stock\n- Daily summary generated')">
+                        <i class="fas fa-bell fa-lg"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    <button class="btn btn-danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </header>
+
+            <!-- Scrollable Content Area -->
+            <div class="content-area">
+
+                <!-- 1. Dashboard & Analytics Section -->
+                <section id="dashboard" class="section active">
+                    <div class="controls-row">
+                        <h2>System Overview</h2>
+                        <button class="btn btn-success" onclick="fetchInventory()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <h3>Total Unique Items</h3>
+                            <div class="value" id="stat-items">--</div>
+                        </div>
+                        <div class="stat-card success">
+                            <h3>Total Stock IN (Lifetime)</h3>
+                            <div class="value" id="stat-in">--</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <h3>Total Stock OUT (Lifetime)</h3>
+                            <div class="value" id="stat-out">--</div>
+                        </div>
+                        <div class="stat-card danger">
+                            <h3>Total Damaged</h3>
+                            <div class="value" id="stat-damaged">--</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-alert-container">
+                        <div class="panel">
+                            <h3>Stock Movement Trends (Mock Analytics)</h3>
+                            <canvas id="movementChart" height="100"></canvas>
+                        </div>
+                        <div class="panel">
+                            <h3><i class="fas fa-exclamation-triangle" style="color: var(--warning)"></i> Low Stock Alerts</h3>
+                            <ul class="alert-list" id="low-stock-list">
+                                <li>Loading alerts...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Master Inventory Section -->
+                <section id="inventory" class="section">
+                    <h2>Master Inventory</h2>
+                    <div class="controls-row" style="margin-top: 15px;">
+                        <div>
+                            <select id="filter-location" onchange="filterInventory()" class="btn" style="background: white; color: black; border: 1px solid #ccc;">
+                                <option value="ALL">All Locations</option>
+                                <option value="HQ">HQ</option>
+                                <option value="Pamankada">Pamankada</option>
+                                <option value="Kahathuduwa">Kahathuduwa</option>
+                            </select>
+                            <select id="filter-category" onchange="filterInventory()" class="btn" style="background: white; color: black; border: 1px solid #ccc;">
+                                <option value="ALL">All Categories</option>
+                                <option value="Chemicals">Chemicals</option>
+                                <option value="Label">Label</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="exportTableToCSV('inventoryTable', 'Inventory_Report.csv')"><i class="fas fa-file-csv"></i> Export CSV</button>
+                    </div>
+                    
+                    <table id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Location</th>
+                                <th>Category</th>
+                                <th>Item Code</th>
+                                <th>Total IN</th>
+                                <th>Total OUT</th>
+                                <th>Damaged</th>
+                                <th>Available Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- 3. Stock Entry Section -->
+                <section id="entry" class="section">
+                    <h2>Register Stock Transaction</h2>
+                    <br>
+                    <form id="stockForm" class="form-card">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="date" id="date" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Location</label>
+                                <select id="location" required>
+                                    <option value="">Select Location</option>
+                                    <option value="HQ">HQ</option>
+                                    <option value="Pamankada">Pamankada</option>
+                                    <option value="Kahathuduwa">Kahathuduwa</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select id="category" onchange="updateProducts()" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Chemicals">Chemicals</option>
+                                    <option value="Label">Label</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Product Code</label>
+                                <select id="product" required>
+                                    <option value="">Select Category First</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Transaction Type</label>
+                                <select id="type" required>
+                                    <option value="IN">IN (Receive Stock)</option>
+                                    <option value="OUT">OUT (Use/Dispatch Stock)</option>
+                                    <option value="DAMAGE">DAMAGE (Remove Stock)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Quantity</label>
+                                <input type="number" id="qty" min="1" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Reference Notes / Reason (Optional)</label>
+                                <textarea id="notes" rows="2" placeholder="e.g., PO #1234 or Production Batch X"></textarea>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 16px;"><i class="fas fa-save"></i> Save Transaction</button>
+                        <div id="statusMsg" style="margin-top: 15px; text-align: center; font-weight: bold;"></div>
+                    </form>
+                </section>
+
+                <!-- 4. Transaction History Section -->
+                <section id="history" class="section">
+                    <h2>Date-Wise Transaction History</h2>
+                    <div class="controls-row" style="margin-top: 15px;">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label>From: </label><input type="date" class="btn" style="background: white; color: black;">
+                            <label>To: </label><input type="date" class="btn" style="background: white; color: black;">
+                            <button class="btn btn-primary">Filter</button>
+                        </div>
+                        <button class="btn btn-primary" onclick="exportTableToCSV('historyTable', 'Transactions.csv')">Export Log</button>
+                    </div>
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Location</th>
+                                <th>Product</th>
+                                <th>Type</th>
+                                <th>Qty</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body">
+                            <!-- Mock Data for Demonstration -->
+                            <tr><td>2023-10-25</td><td>admin</td><td>HQ</td><td>Litchi Fresh</td><td><span class="status-badge status-in">IN</span></td><td>500</td><td>Initial Batch</td></tr>
+                            <tr><td>2023-10-26</td><td>staff_1</td><td>Pamankada</td><td>40ml Bottle</td><td><span class="status-badge status-out">OUT</span></td><td>150</td><td>Production run</td></tr>
+                            <tr><td>2023-10-27</td><td>admin</td><td>Kahathuduwa</td><td>Label HO040</td><td><span class="status-badge status-damage">DAMAGE</span></td><td>5</td><td>Water damage</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- 5. Product Catalog Section -->
+                <section id="products" class="section">
+                    <div class="controls-row">
+                        <h2>Product Catalog (Database)</h2>
+                        <button class="btn btn-success" onclick="alert('Requires backend API update to add dynamic products.')"><i class="fas fa-plus"></i> Add New Product</button>
+                    </div>
+                    <table id="productTable">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Item Code</th>
+                                <th>Measure Type</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-list-body">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- 6. Audit & Adjustments Section -->
+                <section id="adjustments" class="section">
+                    <h2>Manual Stock Adjustment (Audit Mode)</h2>
+                    <p style="margin-bottom: 20px; color: #666;">Use this module only during physical stock audits to correct system discrepancies.</p>
+                    <form class="form-card" onsubmit="event.preventDefault(); alert('Audit adjustment logged (Requires Backend)');">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Location</label>
+                                <select required><option>HQ</option><option>Pamankada</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Product Code</label>
+                                <input type="text" placeholder="Type to search..." required>
+                            </div>
+                            <div class="form-group">
+                                <label>Current System Stock</label>
+                                <input type="number" readonly value="0" style="background: #eee;">
+                            </div>
+                            <div class="form-group">
+                                <label>Actual Physical Stock</label>
+                                <input type="number" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Audit Reason (Required)</label>
+                                <textarea required rows="2" placeholder="Explain the discrepancy..."></textarea>
+                            </div>
+                        </div>
+                        <button class="btn btn-warning" type="submit" style="width: 100%;"><i class="fas fa-balance-scale"></i> Submit Audit Correction</button>
+                    </form>
+                </section>
+
+                <!-- 7. Reports Section -->
+                <section id="reports" class="section">
+                    <h2>Generate Reports</h2>
+                    <div class="dashboard-grid" style="margin-top: 20px;">
+                        <div class="stat-card" style="align-items: center; justify-content: center; text-align: center; cursor: pointer;" onclick="exportTableToCSV('inventoryTable', 'Full_Inventory.csv')">
+                            <i class="fas fa-file-excel fa-3x" style="color: var(--success); margin-bottom: 15px;"></i>
+                            <h3>Master Inventory Report (CSV)</h3>
+                        </div>
+                        <div class="stat-card" style="align-items: center; justify-content: center; text-align: center; cursor: pointer;" onclick="exportTableToCSV('historyTable', 'Usage_Report.csv')">
+                            <i class="fas fa-file-pdf fa-3x" style="color: var(--danger); margin-bottom: 15px;"></i>
+                            <h3>Usage & Damage Report (CSV)</h3>
+                        </div>
+                        <div class="stat-card" style="align-items: center; justify-content: center; text-align: center; cursor: pointer;" onclick="alert('Location Transfer Report API Needed')">
+                            <i class="fas fa-truck fa-3x" style="color: var(--accent); margin-bottom: 15px;"></i>
+                            <h3>Location Transfer Logs</h3>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- CONFIGURATION ---
-        // REPLACE THIS URL with your Google Apps Script Web App URL
+        // --- 1. CONFIGURATION & DATA ---
         const API_URL = "https://script.google.com/macros/s/AKfycbxG7XSfjKd3cKuEklgkcZFPmiPgszMt6ue5Ht6bFYhPdbSz4sY8jCAhbiIW-5xtN44/exec"; 
 
         const productsDB = {
@@ -218,17 +496,46 @@
             ]
         };
 
-        // Set today's date automatically
-        document.getElementById('date').valueAsDate = new Date();
+        // Internal State
+        let masterInventoryData = [];
+        let chartInstance = null;
 
-        function showSection(sectionId) {
-            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-            document.getElementById(sectionId).classList.add('active');
-            if(sectionId === 'dashboard') {
-                fetchInventory();
-            }
+        // --- 2. AUTHENTICATION (Simulated) ---
+        function handleLogin(e) {
+            e.preventDefault();
+            // Basic UI simulation of login
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app-layout').style.display = 'flex';
+            
+            // Set date on init
+            document.getElementById('date').valueAsDate = new Date();
+            
+            // Populate Catalog Table
+            populateProductCatalog();
+
+            // Load Dashboard Data
+            fetchInventory();
         }
 
+        function logout() {
+            document.getElementById('app-layout').style.display = 'none';
+            document.getElementById('auth-screen').style.display = 'flex';
+        }
+
+        // --- 3. NAVIGATION ---
+        function nav(sectionId) {
+            // Update active link
+            document.querySelectorAll('.sidebar-menu button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`nav-${sectionId}`).classList.add('active');
+            
+            // Update active section
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+
+            if(sectionId === 'dashboard' || sectionId === 'inventory') fetchInventory();
+        }
+
+        // --- 4. PRODUCT MANAGEMENT & UTILS ---
         function updateProducts() {
             const category = document.getElementById('category').value;
             const productSelect = document.getElementById('product');
@@ -237,19 +544,34 @@
             if (productsDB[category]) {
                 productsDB[category].forEach(item => {
                     let opt = document.createElement('option');
-                    opt.value = item;
-                    opt.textContent = item;
+                    opt.value = item; opt.textContent = item;
                     productSelect.appendChild(opt);
                 });
             }
         }
 
+        function populateProductCatalog() {
+            const tbody = document.getElementById('product-list-body');
+            tbody.innerHTML = '';
+            for(let cat in productsDB) {
+                productsDB[cat].forEach(item => {
+                    tbody.innerHTML += `<tr>
+                        <td><span class="status-badge" style="background:#e2e3e5; color:#383d41;">${cat}</span></td>
+                        <td>${item}</td>
+                        <td>${cat === 'Chemicals' ? 'g' : 'Units'}</td>
+                        <td><button class="btn btn-primary" style="padding: 4px 8px; font-size:12px;">Edit</button></td>
+                    </tr>`;
+                });
+            }
+        }
+
+        // --- 5. STOCK ENTRY ---
         document.getElementById('stockForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const btn = document.querySelector('.submit-btn');
+            const btn = document.querySelector('#stockForm .btn-primary');
             const status = document.getElementById('statusMsg');
             
-            btn.innerText = "Saving...";
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
             status.innerText = "";
 
             const payload = {
@@ -262,7 +584,8 @@
             };
 
             try {
-                const response = await fetch(API_URL, {
+                // Warning: Mode no-cors will not let you read the response. 
+                await fetch(API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
@@ -272,17 +595,21 @@
                 status.innerText = "Transaction Saved Successfully!";
                 status.style.color = "green";
                 document.getElementById('qty').value = ''; 
+                document.getElementById('notes').value = ''; 
+                fetchInventory(); // Auto refresh
             } catch (error) {
                 status.innerText = "Error saving transaction.";
                 status.style.color = "red";
             } finally {
-                btn.innerText = "Save Transaction";
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Transaction';
+                setTimeout(() => status.innerText = "", 3000);
             }
         });
 
+        // --- 6. INVENTORY FETCH & DASHBOARD RENDER ---
         async function fetchInventory() {
             const tbody = document.querySelector('#inventoryTable tbody');
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Loading data...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading Data from Cloud...</td></tr>';
 
             try {
                 const response = await fetch(API_URL, {
@@ -291,26 +618,134 @@
                 });
                 
                 const res = await response.json();
-                tbody.innerHTML = '';
-
-                if (res.status === 'success' && res.data.length > 0) {
-                    res.data.forEach(item => {
-                        let row = `<tr>
-                            <td>${item.location}</td>
-                            <td>${item.itemCode}</td>
-                            <td style="color:green; font-weight:bold;">${item.IN}</td>
-                            <td style="color:#d35400;">${item.OUT}</td>
-                            <td style="color:red;">${item.DAMAGE}</td>
-                            <td style="font-weight:bold;">${item.closeStock}</td>
-                        </tr>`;
-                        tbody.innerHTML += row;
-                    });
+                
+                if (res.status === 'success') {
+                    masterInventoryData = res.data;
+                    renderInventoryTable(masterInventoryData);
+                    updateDashboardStats(masterInventoryData);
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No stock data available.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No stock data available.</td></tr>';
                 }
             } catch (error) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Failed to load data. Please ensure API URL is correct.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">Failed to load data. Ensure Google Apps Script API is deployed and URL is correct.</td></tr>';
             }
+        }
+
+        function renderInventoryTable(data) {
+            const tbody = document.querySelector('#inventoryTable tbody');
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                // Try to guess category based on DB for display
+                let catBadge = "Others";
+                if(productsDB["Chemicals"].includes(item.itemCode)) catBadge = "Chemicals";
+                if(productsDB["Label"].includes(item.itemCode)) catBadge = "Label";
+
+                let row = `<tr>
+                    <td><b>${item.location}</b></td>
+                    <td><span class="status-badge" style="background:#e2e3e5; color:#383d41;">${catBadge}</span></td>
+                    <td>${item.itemCode}</td>
+                    <td style="color:var(--success); font-weight:bold;">${item.IN}</td>
+                    <td style="color:var(--warning); font-weight:bold;">${item.OUT}</td>
+                    <td style="color:var(--danger); font-weight:bold;">${item.DAMAGE}</td>
+                    <td style="font-weight:bold; font-size: 16px;">${item.closeStock}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function updateDashboardStats(data) {
+            let tIn = 0, tOut = 0, tDam = 0;
+            let alerts = '';
+
+            data.forEach(d => {
+                tIn += parseInt(d.IN) || 0;
+                tOut += parseInt(d.OUT) || 0;
+                tDam += parseInt(d.DAMAGE) || 0;
+
+                // Simple Threshold logic (Alert if closeStock < 50)
+                let stock = parseInt(d.closeStock) || 0;
+                if(stock < 50 && stock > 0) {
+                    alerts += `<li><b>${d.itemCode}</b> at ${d.location} is running low (${stock} left)</li>`;
+                } else if(stock <= 0) {
+                    alerts += `<li style="border-left-color:red; background:#f8d7da;"><b>${d.itemCode}</b> at ${d.location} is OUT OF STOCK!</li>`;
+                }
+            });
+
+            document.getElementById('stat-items').innerText = data.length;
+            document.getElementById('stat-in').innerText = tIn;
+            document.getElementById('stat-out').innerText = tOut;
+            document.getElementById('stat-damaged').innerText = tDam;
+            document.getElementById('low-stock-list').innerHTML = alerts || "<li>All stock levels look healthy!</li>";
+
+            renderChart(tIn, tOut, tDam);
+        }
+
+        function renderChart(totalIn, totalOut, totalDam) {
+            const ctx = document.getElementById('movementChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy(); // destroy old chart
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Stock IN', 'Stock OUT', 'Damaged'],
+                    datasets: [{
+                        label: 'Total Units Lifetime',
+                        data: [totalIn, totalOut, totalDam],
+                        backgroundColor: ['#27ae60', '#f1c40f', '#e74c3c']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // --- 7. FILTER & SEARCH & EXPORT ---
+        function filterInventory() {
+            const loc = document.getElementById('filter-location').value;
+            const cat = document.getElementById('filter-category').value;
+            
+            let filtered = masterInventoryData.filter(item => {
+                let itemCat = "Others";
+                if(productsDB["Chemicals"].includes(item.itemCode)) itemCat = "Chemicals";
+                if(productsDB["Label"].includes(item.itemCode)) itemCat = "Label";
+
+                let locMatch = (loc === 'ALL') || (item.location === loc);
+                let catMatch = (cat === 'ALL') || (itemCat === cat);
+                return locMatch && catMatch;
+            });
+            renderInventoryTable(filtered);
+        }
+
+        function globalSearch(query) {
+            if(!query) { filterInventory(); return; }
+            query = query.toLowerCase();
+            let filtered = masterInventoryData.filter(item => 
+                item.itemCode.toLowerCase().includes(query) || item.location.toLowerCase().includes(query)
+            );
+            
+            // Switch to inventory tab if searching
+            if(document.getElementById('dashboard').classList.contains('active')) nav('inventory');
+            renderInventoryTable(filtered);
+        }
+
+        function exportTableToCSV(tableID, filename) {
+            let csv = [];
+            let rows = document.querySelectorAll(`#${tableID} tr`);
+            
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll("td, th");
+                for (let j = 0; j < cols.length; j++) 
+                    row.push('"' + cols[j].innerText.replace(/"/g, '""') + '"');
+                csv.push(row.join(","));
+            }
+            
+            let csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
+            let downloadLink = document.createElement("a");
+            downloadLink.download = filename;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
         }
     </script>
 </body>
