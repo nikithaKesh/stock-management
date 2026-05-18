@@ -339,7 +339,7 @@
                             <div class="form-group"><label>Location</label><select id="entry-loc" required><option value="">Select...</option><option>HQ</option><option>Pamankada</option><option>Kahathuduwa</option></select></div>
                             <div class="form-group">
                                 <label>Category</label>
-                                <select id="entry-cat" onchange="updateProductDropdown('entry-cat', 'entry-prod')" required>
+                                <select id="entry-cat" onchange="updateProducts()" required>
                                     <option value="">Select...</option><option>Chemicals</option><option>Label</option><option>Others</option>
                                 </select>
                             </div>
@@ -409,7 +409,15 @@
                         <button class="btn btn-success" onclick="openModal('modal-add-product')"><i class="fas fa-plus"></i> Register Entity</button>
                     </div>
                     <table id="prod-table">
-                        <thead><tr><th>Classification</th><th>Designation Code</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Classification</th>
+                                <th>Designation Code</th>
+                                <th>Sub Category</th>
+                                <th>Measure</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
                         <tbody id="prod-body"></tbody>
                     </table>
                 </section>
@@ -482,17 +490,33 @@
 
     <!-- Feature 5: Add/Edit Product -->
     <div class="modal-overlay" id="modal-add-product">
-        <div class="glass-panel modal-content" style="width: 400px;">
+        <div class="glass-panel modal-content" style="width: 450px;">
             <i class="fas fa-times close-modal" onclick="closeModal('modal-add-product')"></i>
             <h2 style="margin-bottom: 20px; color:#fff;">Register New Entity</h2>
             <form onsubmit="handleAddProduct(event)">
                 <div class="form-group">
-                    <label>Classification</label>
+                    <label>Classification (Main Category)</label>
                     <select id="new-prod-cat" required><option value="Chemicals">Chemicals</option><option value="Label">Label</option><option value="Others">Others</option></select>
                 </div>
-                <div class="form-group" style="margin-bottom: 20px;">
+                <div class="form-group" style="margin-bottom: 15px;">
                     <label>Designation Code / Name</label>
                     <input type="text" id="new-prod-name" required placeholder="Enter exact identifier...">
+                </div>
+                <div class="form-grid" style="margin-bottom: 20px; gap: 10px;">
+                    <div class="form-group">
+                        <label>Sub Category</label>
+                        <input type="text" id="new-prod-subcat" placeholder="e.g. OIL, BOX, Bottle">
+                    </div>
+                    <div class="form-group">
+                        <label>Measure Type</label>
+                        <select id="new-prod-measure" required>
+                            <option value="Units">Units</option>
+                            <option value="g">g</option>
+                            <option value="Kg">Kg</option>
+                            <option value="ml">ml</option>
+                            <option value="L">L</option>
+                        </select>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-success" style="width: 100%; padding: 12px;">Save to Registry</button>
             </form>
@@ -605,14 +629,16 @@
         const rowsPerPage = 12;
 
         // --- MOCK LOGIC FOR NEW FEATURES ---
-        // (This allows the new features to run locally in the browser since the Google API doesn't have these fields yet)
         function initMockData() {
             const locs = ["HQ", "Pamankada", "Kahathuduwa"];
             const types = ["IN", "IN", "OUT", "DAMAGE"];
             for(let i=0; i<60; i++) {
                 let cat = Object.keys(productsDB)[Math.floor(Math.random()*3)];
                 if (productsDB[cat].length === 0) continue;
-                let prod = productsDB[cat][Math.floor(Math.random()*productsDB[cat].length)];
+                
+                let prodObj = productsDB[cat][Math.floor(Math.random()*productsDB[cat].length)];
+                let prod = typeof prodObj === 'string' ? prodObj : prodObj.itemCode;
+
                 let date = new Date(); date.setDate(date.getDate() - Math.floor(Math.random()*30));
                 transactionsLog.push({
                     date: date.toISOString().split('T')[0], location: locs[Math.floor(Math.random()*3)],
@@ -643,17 +669,14 @@
             document.getElementById('entry-date').valueAsDate = new Date();
             document.getElementById('tr-date').valueAsDate = new Date();
 
-            // NEW: Fetch live products from Google Sheets on login
+            // Fetch live products from Google Sheets on login
             await fetchLiveProducts();
             
-            initMockData(); // Generates mock history to power charts/pagination
+            initMockData(); 
             populateProductCatalog();
-            
-            // Try fetching real API, but use our local engine to power advanced features
             fetchInventory();
         }
 
-        // NEW: Function to load products from Google Sheets
         async function fetchLiveProducts() {
             try {
                 const response = await fetch(API_URL, {
@@ -662,7 +685,6 @@
                 });
                 const res = await response.json();
                 
-                // Overwrite local defaults only if we got valid data from the sheet
                 if (res.status === 'success' && res.data) {
                     let hasData = false;
                     for (let key in res.data) { if (res.data[key].length > 0) hasData = true; }
@@ -711,7 +733,12 @@
             const category = document.getElementById('entry-cat').value;
             const productSelect = document.getElementById('entry-prod');
             productSelect.innerHTML = '<option value="">Select Designation</option>';
-            if (productsDB[category]) productsDB[category].forEach(item => { productSelect.innerHTML += `<option value="${item}">${item}</option>`; });
+            if (productsDB[category]) {
+                productsDB[category].forEach(item => { 
+                    let itemName = typeof item === 'string' ? item : item.itemCode;
+                    productSelect.innerHTML += `<option value="${itemName}">${itemName}</option>`; 
+                });
+            }
         }
 
         function populateProductCatalog() {
@@ -719,10 +746,15 @@
             tbody.innerHTML = '';
             for(let cat in productsDB) {
                 productsDB[cat].forEach(item => {
+                    let name = typeof item === 'string' ? item : item.itemCode;
+                    let subCat = typeof item === 'string' ? '-' : (item.subCategory || '-');
+                    let measure = typeof item === 'string' ? (cat === 'Chemicals' ? 'g' : 'Units') : item.measureType;
+
                     tbody.innerHTML += `<tr>
                         <td><span class="status-badge status-neutral">${cat}</span></td>
-                        <td style="color: #fff;">${item}</td>
-                        <td><span style="color:var(--success);">Active</span></td>
+                        <td style="color: #fff;">${name}</td>
+                        <td style="color: var(--text-muted);">${subCat}</td>
+                        <td style="font-weight: 500;">${measure}</td>
                         <td><button class="btn btn-outline" style="padding: 4px 10px; font-size:11px;">EDIT</button></td>
                     </tr>`;
                 });
@@ -733,15 +765,21 @@
             e.preventDefault();
             const cat = document.getElementById('new-prod-cat').value;
             const name = document.getElementById('new-prod-name').value;
+            const subcat = document.getElementById('new-prod-subcat').value;
+            const measure = document.getElementById('new-prod-measure').value;
             const btn = document.querySelector('#modal-add-product .btn-success');
             
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-            const payload = { category: cat, name: name };
+            const payload = { 
+                category: cat, 
+                itemCode: name, 
+                subCategory: subcat, 
+                measureType: measure 
+            };
 
             try {
-                // Send to Google Sheets
                 await fetch(API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -750,7 +788,7 @@
                 });
 
                 if(!productsDB[cat]) productsDB[cat] = [];
-                productsDB[cat].push(name);
+                productsDB[cat].push(payload); 
                 populateProductCatalog();
                 closeModal('modal-add-product');
                 alert(`New asset [${name}] registered securely to [${cat}].`);
@@ -781,15 +819,13 @@
                 user: 'admin'
             };
 
-            // 1. Try sending to Google API (Doesn't break original setup)
             try {
                 await fetch(API_URL, {
                     method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'addTransaction', payload: payload })
                 });
-            } catch(e) {} // Ignore API errors to keep local system running for display
+            } catch(e) {}
 
-            // 2. Update Local State (Powers advanced features)
             transactionsLog.unshift(payload);
             filteredTransactions = [...transactionsLog];
             recalculateInventoryLocally();
@@ -811,7 +847,6 @@
             
             if(from === to) return alert("Source and Destination sectors must differ.");
 
-            // Create paired logs
             transactionsLog.unshift({ date, location: from, category: 'Others', itemCode: prod, type: 'OUT', qty, batch: 'TRANS-OUT', user: 'admin' });
             transactionsLog.unshift({ date, location: to, category: 'Others', itemCode: prod, type: 'IN', qty, batch: 'TRANS-IN', user: 'admin' });
             
@@ -824,7 +859,6 @@
 
         // --- 6. INVENTORY & DETAILS MODAL ---
         async function fetchInventory() {
-            // Re-sync with local calculated state for immediate response
             renderInventoryTable(Object.values(masterInventorySummary));
             initDashboard();
         }
