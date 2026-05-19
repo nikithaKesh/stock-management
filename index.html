@@ -23,7 +23,7 @@
             --text-main: #ffffff;
             --text-muted: #9ca3af;
             
-            --accent: #eab308; /* Muted, professional golden yellow */
+            --accent: #eab308; 
             --accent-glow: rgba(234, 179, 8, 0.3);
             --success: #22c55e;
             --danger: #ef4444;
@@ -45,13 +45,11 @@
             border: 1px solid var(--border-light); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); border-radius: 12px;
         }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(234,179,8,0.2); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(234,179,8,0.5); }
 
-        /* Toast Notifications */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast {
             background: rgba(10, 10, 10, 0.95); border-left: 4px solid var(--accent); padding: 15px 20px;
@@ -65,7 +63,6 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
-        /* Auth Screen */
         #auth-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; 
             z-index: 1000; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(8px);
@@ -79,10 +76,8 @@
         }
         .login-box input:focus { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
 
-        /* Layout */
         #app-layout { display: none; height: 100vh; width: 100vw; flex-direction: row; padding: 15px; gap: 15px; overflow: hidden; }
         
-        /* Sidebar */
         .sidebar { width: 260px; display: flex; flex-direction: column; overflow-y: auto; transition: 0.3s ease; }
         .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid var(--border-light); }
         .sidebar-header h2 { font-weight: 500; font-size: 20px; letter-spacing: 1px; }
@@ -95,10 +90,8 @@
         .sidebar-menu button:hover { background-color: var(--surface-hover); color: var(--text-main); }
         .sidebar-menu button.active { background-color: rgba(234, 179, 8, 0.1); color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
         
-        /* Mobile Overlay */
         .mobile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1005; backdrop-filter: blur(2px); }
 
-        /* Main Content */
         .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .topbar { height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; border-bottom: 1px solid var(--border-light); }
         
@@ -119,11 +112,9 @@
         h2 { font-weight: 400; margin-bottom: 5px; color: var(--text-main); letter-spacing: 0.5px; }
         .subtitle { color: var(--text-muted); font-size: 13px; margin-bottom: 25px; }
 
-        /* Grid & Cards */
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px; }
 
-        /* Filter Bar */
         .filter-bar { background: rgba(0,0,0,0.3); padding: 15px 20px; border-radius: 8px; border: 1px solid var(--border-accent); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         .filter-group { display: flex; align-items: center; gap: 10px; }
         .filter-select { background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-light); border-radius: 6px; padding: 8px 12px; outline: none; font-size: 13px; cursor: pointer; }
@@ -141,7 +132,6 @@
         .btn-outline:hover { background: rgba(255,255,255,0.1); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Forms */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .form-group { margin-bottom: 5px; position: relative; }
         .form-group.full-width { grid-column: span 2; }
@@ -153,7 +143,6 @@
         .barcode-btn { position: absolute; right: 10px; top: 32px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; transition: 0.3s; }
         .barcode-btn:hover { color: var(--accent); }
 
-        /* Tables & Scroll Wrappers */
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 6px; }
         table { width: 100%; border-collapse: separate; border-spacing: 0 6px; min-width: 600px; }
         th, td { padding: 14px 18px; text-align: left; }
@@ -176,25 +165,20 @@
         .status-transfer { color: var(--info); border-color: rgba(59, 130, 246, 0.3); }
         .status-neutral { color: var(--text-muted); border-color: var(--border-accent); }
 
-        /* Custom Stat Rows */
         .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
         .stat-val { font-weight: 600; color: #fff; }
 
-        /* Modals */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
         .modal-content { padding: 30px; position: relative; border-radius: 12px; width: 90%; max-width: 450px;}
         .close-modal { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 18px; color: var(--text-muted); transition: 0.2s;}
         .close-modal:hover { color: var(--text-main); }
 
-        /* Split View for Staged Entry */
         .split-entry { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; align-items: start; }
         .draft-table-wrapper { background: rgba(0,0,0,0.4); padding: 20px; border-radius: 8px; border: 1px solid var(--border-accent); max-height: 500px; overflow-y: auto;}
         
-        /* Role Handling */
         .manager-only { display: none; }
 
-        /* Mobile Adjustments */
         @media (max-width: 900px) {
             .split-entry { grid-template-columns: 1fr; }
             .draft-table-wrapper { max-height: 350px; }
@@ -225,10 +209,8 @@
 </head>
 <body>
 
-    <!-- Notification Container -->
     <div id="toast-container"></div>
 
-    <!-- Authentication Screen -->
     <div id="auth-screen">
         <div class="login-box glass-panel">
             <h2>Biseka Authenticator</h2>
@@ -241,12 +223,9 @@
         </div>
     </div>
 
-    <!-- Main Application -->
     <div id="app-layout">
-        <!-- Mobile Overlay -->
         <div class="mobile-overlay" id="mobile-overlay" onclick="toggleSidebar()"></div>
 
-        <!-- Sidebar Navigation -->
         <aside class="sidebar glass-panel" id="sidebar">
             <div class="sidebar-header">
                 <h2><i class="fas fa-boxes-stacked" style="color: var(--accent); margin-right: 8px;"></i> Biseka</h2>
@@ -263,7 +242,6 @@
             </div>
         </aside>
 
-        <!-- Main Content Wrapper -->
         <main class="main-wrapper glass-panel">
             <header class="topbar">
                 <div style="display: flex; align-items: center;">
@@ -304,7 +282,6 @@
                         </div>
                     </div>
                     
-                    <!-- NEW: Detailed Analytics Dashboards -->
                     <div class="grid-2">
                         <div class="glass-panel" style="padding: 25px;">
                             <h3 style="font-size: 14px; font-weight: 500; color: var(--text-main); margin-bottom: 20px; text-transform: uppercase;"><i class="fas fa-tags" style="color: var(--info); margin-right:8px;"></i> Catalog Breakdown</h3>
@@ -406,7 +383,6 @@
                     <p class="subtitle">Stage operations. Only Admins/Managers can execute final approvals to the master database.</p>
                     
                     <div class="split-entry">
-                        <!-- Left Side: Draft Table -->
                         <div class="draft-table-wrapper">
                             <h3 style="font-size: 14px; margin-bottom: 15px; color: var(--accent);"><i class="fas fa-clipboard-list"></i> Pending Approvals</h3>
                             <div class="table-responsive" style="margin-bottom: 20px;">
@@ -432,7 +408,11 @@
                                 <div class="form-group">
                                     <label>Category</label>
                                     <select id="entry-cat" onchange="updateProductsList()" required>
-                                        <option value="">Select...</option><option>Chemicals</option><option>Label</option><option>Others</option>
+                                        <option value="">Select...</option>
+                                        <option value="Assigned">Assigned (Bundle/Template)</option>
+                                        <option value="Chemicals">Chemicals</option>
+                                        <option value="Label">Label</option>
+                                        <option value="Others">Others</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -443,7 +423,6 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Transaction Type</label>
-                                    <!-- Added TRANSFER option -->
                                     <select id="entry-type" onchange="handleTxTypeChange()" required>
                                         <option value="IN">INFLOW (Receive)</option>
                                         <option value="OUT">OUTFLOW (Use)</option>
@@ -451,7 +430,6 @@
                                         <option value="DAMAGE">COMPROMISED (Remove)</option>
                                     </select>
                                 </div>
-                                <!-- Hidden initially, appears for Transfer -->
                                 <div class="form-group" id="dest-loc-group" style="display:none; border: 1px solid var(--info); padding: 10px; border-radius: 6px; background: rgba(59,130,246,0.05);">
                                     <label style="color: var(--info);"><i class="fas fa-truck"></i> Destination Location</label>
                                     <select id="entry-dest-loc">
@@ -567,6 +545,7 @@
         let masterInventorySummary = {};
         let transactionsLog = [];
         let filteredTransactions = [];
+        let productAssignments = []; // NEW: Assigned Products data
         
         let appUsers = []; 
         let currentUser = null;
@@ -575,7 +554,25 @@
         let stagedOperations = [];
         let offlineQueue = JSON.parse(localStorage.getItem('biseka_offline_queue')) || [];
 
-        // Formatting function to remove decimals if not needed
+        // --- PRELOAD USERS FOR FASTER LOGIN ---
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchUsersBackground();
+        });
+
+        async function fetchUsersBackground() {
+            try {
+                // Short timeout to avoid locking up browser resources if backend sleeps
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); 
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getUsers' }), signal: controller.signal });
+                clearTimeout(timeoutId);
+                const data = await res.json();
+                if(data.status === 'success' && data.data) appUsers = data.data;
+            } catch(e) { 
+                console.log('Background preload failed. Will attempt standard on login.');
+            }
+        }
+
         function formatQty(val) {
             let num = Number(val);
             return Number.isInteger(num) ? num : parseFloat(num.toFixed(2));
@@ -625,14 +622,25 @@
             const passIn = document.getElementById('login-pass').value.trim();
             const btn = document.getElementById('login-btn');
 
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking Database...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Establishing Connection...';
             
-            try {
-                const uRes = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getUsers' }) });
-                const uData = await uRes.json();
-                if(uData.status === 'success' && uData.data) { appUsers = uData.data; }
-            } catch (err) {
-                if(appUsers.length === 0) appUsers = [{ username: 'admin', password: 'password', role: 'Admin', status: 'Active' }];
+            // Fallback fetch if background preload hasn't finished or failed
+            if (appUsers.length === 0) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    const uRes = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getUsers' }), signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    const uData = await uRes.json();
+                    if(uData.status === 'success' && uData.data) { appUsers = uData.data; }
+                } catch (err) {
+                    console.warn("Connection timeout. Resorting to local offline keys.");
+                }
+            }
+
+            // Extreme fallback if network entirely down
+            if(appUsers.length === 0) {
+                appUsers = [{ username: 'admin', password: 'password', role: 'Admin', status: 'Active' }];
             }
 
             const userFound = appUsers.find(u => u.username === userIn && u.password === passIn);
@@ -658,9 +666,20 @@
                 document.getElementById('staff-warning').style.display = 'block';
             }
 
-            await fetchLiveProducts();
-            await fetchLiveHistory();
-            await fetchInventory();
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Synchronizing Ledgers...';
+
+            // PARALLEL EXECUTION: Loads significantly faster than sequentially awaiting each fetch
+            try {
+                await Promise.all([
+                    fetchLiveProducts(),
+                    fetchLiveHistory(),
+                    fetchInventory(),
+                    fetchProductAssignments()
+                ]);
+            } catch(error) {
+                console.warn("Some endpoints timed out. System running on partial cache.");
+            }
+            
             processOfflineQueue();
 
             document.getElementById('auth-screen').style.display = 'none';
@@ -671,35 +690,42 @@
         }
 
         async function fetchLiveProducts() {
-            try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
-                const data = await res.json();
-                if (data.status === 'success' && data.data) productsDB = data.data; 
-            } catch (error) {}
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getProducts' }) });
+            const data = await res.json();
+            if (data.status === 'success' && data.data) productsDB = data.data; 
         }
 
         async function fetchLiveHistory() {
-            try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getHistory' }) });
-                const data = await res.json();
-                if (data.status === 'success' && data.data) {
-                    transactionsLog = data.data;
-                    filteredTransactions = [...transactionsLog];
-                }
-            } catch (error) {}
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getHistory' }) });
+            const data = await res.json();
+            if (data.status === 'success' && data.data) {
+                transactionsLog = data.data;
+                filteredTransactions = [...transactionsLog];
+            }
         }
 
         async function fetchInventory() {
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getInventory' }) });
+            const data = await res.json();
+            if (data.status === 'success' && data.data) {
+                masterInventorySummary = {};
+                data.data.forEach(item => { masterInventorySummary[`${item.location}_${item.itemCode}`] = item; });
+                renderInventoryTable();
+                updateCommandCenter();
+            }
+        }
+
+        async function fetchProductAssignments() {
+            // EXPECTS BACKEND ACTION 'getAssignments' pulling from the 'ProductAssign' sheet!
             try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getInventory' }) });
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAssignments' }) });
                 const data = await res.json();
                 if (data.status === 'success' && data.data) {
-                    masterInventorySummary = {};
-                    data.data.forEach(item => { masterInventorySummary[`${item.location}_${item.itemCode}`] = item; });
-                    renderInventoryTable();
-                    updateCommandCenter();
+                    productAssignments = data.data;
                 }
-            } catch (error) { showToast("Matrix compile failed. Check API.", "error"); }
+            } catch(e) {
+                console.log("No assigned products loaded. Check API.");
+            }
         }
 
         function logout() { location.reload(); }
@@ -742,7 +768,6 @@
                 invSortAsc = true;
             }
             
-            // Update icon visually
             document.querySelectorAll('#inventoryTable th.sortable').forEach(th => {
                 th.classList.remove('active-sort');
                 th.querySelector('i').className = 'fas fa-sort';
@@ -932,7 +957,14 @@
             const dataList = document.getElementById('entry-prod-list');
             document.getElementById('entry-prod').value = ''; 
             dataList.innerHTML = '';
-            if (productsDB[category]) {
+
+            if (category === 'Assigned') {
+                // Compile unique Main Products from productAssignments
+                const mainProducts = [...new Set(productAssignments.map(p => p['Main Product'] || p.mainProduct))];
+                mainProducts.forEach(item => {
+                    dataList.innerHTML += `<option value="${item}">`;
+                });
+            } else if (productsDB[category]) {
                 productsDB[category].forEach(item => {
                     let itemName = typeof item === 'string' ? item : item.itemCode;
                     dataList.innerHTML += `<option value="${itemName}">`;
@@ -958,56 +990,83 @@
         async function addToDraft(e) {
             e.preventDefault();
             
-            const uuid = generateUUID();
             const type = document.getElementById('entry-type').value;
             const sourceLoc = document.getElementById('entry-loc').value;
-            const notes = document.getElementById('entry-notes').value || '';
+            const category = document.getElementById('entry-cat').value;
+            const entryProd = document.getElementById('entry-prod').value;
+            const baseQty = parseFloat(document.getElementById('entry-qty').value);
+            const baseNotes = document.getElementById('entry-notes').value || '';
+            const date = document.getElementById('entry-date').value;
             
-            const basePayload = {
-                date: document.getElementById('entry-date').value,
-                category: document.getElementById('entry-cat').value,
-                itemCode: document.getElementById('entry-prod').value,
-                qty: document.getElementById('entry-qty').value,
-                user: currentUser.username
-            };
+            const destLoc = document.getElementById('entry-dest-loc').value;
+            if(type === 'TRANSFER' && sourceLoc === destLoc) {
+                return showToast("Source and Destination locations cannot be the same.", "error");
+            }
 
-            const editIndex = parseInt(document.getElementById('edit-draft-index').value);
+            let itemsToProcess = [];
 
-            if(type === 'TRANSFER') {
-                const destLoc = document.getElementById('entry-dest-loc').value;
-                if(sourceLoc === destLoc) {
-                    showToast("Source and Destination locations cannot be the same.", "error");
-                    return;
+            // BOM / Bundle Logic Processing
+            if (category === 'Assigned') {
+                const rules = productAssignments.filter(p => p['Main Product'] === entryProd || p.mainProduct === entryProd);
+                if (rules.length === 0) {
+                    return showToast("No assigned items mapped for this Main Product. Check backend.", "error");
                 }
-                
-                // Create OUT Payload for Source
-                const uuidOut = generateUUID();
-                const outPayload = { ...basePayload, uuid: uuidOut, type: 'OUT', location: sourceLoc, notes: `Tx-Out -> ${destLoc}. ${notes}` };
-                outPayload.hash = await generateHash(`${uuidOut}-${outPayload.itemCode}-${outPayload.qty}-OUT`);
-                
-                // Create IN Payload for Dest
-                const uuidIn = generateUUID();
-                const inPayload = { ...basePayload, uuid: uuidIn, type: 'IN', location: destLoc, notes: `Tx-In <- ${sourceLoc}. ${notes}` };
-                inPayload.hash = await generateHash(`${uuidIn}-${inPayload.itemCode}-${inPayload.qty}-IN`);
-                
-                stagedOperations.push(outPayload, inPayload);
-                showToast("Inter-branch transfer staged.", "info");
 
+                rules.forEach(r => {
+                    let multiplier = parseFloat(r['Qty Per Main'] || r.qtyPerMain || 1);
+                    itemsToProcess.push({
+                        cat: r['Assigned Category'] || r.assignCategory,
+                        prod: r['Assigned Product'] || r.assignProduct,
+                        qty: formatQty(baseQty * multiplier),
+                        notes: `[Auto: ${entryProd}] ` + baseNotes
+                    });
+                });
             } else {
-                const payload = { ...basePayload, uuid: uuid, type: type, location: sourceLoc, notes: notes };
-                payload.hash = await generateHash(`${uuid}-${payload.itemCode}-${payload.qty}-${payload.type}`);
-                
-                if(editIndex > -1) {
-                    stagedOperations[editIndex] = payload;
-                    document.getElementById('edit-draft-index').value = "-1";
-                    document.getElementById('btn-draft-submit').innerHTML = '<i class="fas fa-plus"></i> Stage Operation';
-                    showToast("Draft updated.", "success");
+                itemsToProcess.push({
+                    cat: category,
+                    prod: entryProd,
+                    qty: baseQty,
+                    notes: baseNotes
+                });
+            }
+
+            // Remove edited line if in edit mode
+            const editIndex = parseInt(document.getElementById('edit-draft-index').value);
+            if (editIndex > -1) {
+                stagedOperations.splice(editIndex, 1);
+            }
+
+            // Process staging arrays based on transaction type
+            for (let item of itemsToProcess) {
+                if (type === 'TRANSFER') {
+                    // Outflow from Source
+                    const uuidOut = generateUUID();
+                    const outPayload = { date, category: item.cat, itemCode: item.prod, qty: item.qty, user: currentUser.username, uuid: uuidOut, type: 'OUT', location: sourceLoc, notes: `Tx-Out -> ${destLoc}. ${item.notes}` };
+                    outPayload.hash = await generateHash(`${uuidOut}-${item.prod}-${item.qty}-OUT`);
+                    
+                    // Inflow to Destination
+                    const uuidIn = generateUUID();
+                    const inPayload = { date, category: item.cat, itemCode: item.prod, qty: item.qty, user: currentUser.username, uuid: uuidIn, type: 'IN', location: destLoc, notes: `Tx-In <- ${sourceLoc}. ${item.notes}` };
+                    inPayload.hash = await generateHash(`${uuidIn}-${item.prod}-${item.qty}-IN`);
+                    
+                    stagedOperations.push(outPayload, inPayload);
                 } else {
+                    const uuid = generateUUID();
+                    const payload = { date, category: item.cat, itemCode: item.prod, qty: item.qty, user: currentUser.username, uuid, type, location: sourceLoc, notes: item.notes };
+                    payload.hash = await generateHash(`${uuid}-${item.prod}-${item.qty}-${type}`);
                     stagedOperations.push(payload);
-                    showToast("Operation staged.", "info");
                 }
             }
 
+            if (editIndex > -1) {
+                document.getElementById('edit-draft-index').value = "-1";
+                document.getElementById('btn-draft-submit').innerHTML = '<i class="fas fa-plus"></i> Stage Operation';
+                showToast("Draft updated.", "success");
+            } else {
+                showToast(category === 'Assigned' ? "Assigned product logic executed." : "Operation staged.", "info");
+            }
+
+            // Reset form
             document.getElementById('entry-prod').value = '';
             document.getElementById('entry-qty').value = '';
             document.getElementById('entry-notes').value = '';
@@ -1029,6 +1088,9 @@
                 let badge = op.type==='IN'?'var(--success)':(op.type==='OUT'?'var(--warning)':'var(--danger)');
                 let displayType = op.notes.includes('Tx-') ? `<span style="color:var(--info)">TRANSFER [${op.type}]</span>` : op.type;
                 
+                // Allow edit only if it's not an auto-generated transfer component to avoid data corruption
+                let isAutoTrans = op.notes.includes('Tx-');
+
                 tbody.innerHTML += `
                     <tr>
                         <td>${op.location}</td>
@@ -1036,7 +1098,7 @@
                         <td style="color:${badge};">${displayType}</td>
                         <td style="font-weight:bold;">${formatQty(op.qty)}</td>
                         <td>
-                            <button style="background:transparent; border:none; color:var(--info); cursor:pointer; margin-right:8px;" onclick="editDraft(${index})" title="Edit (Disabled for automated transfers)" ${op.notes.includes('Tx-') ? 'disabled style="opacity:0.2"' : ''}><i class="fas fa-edit"></i></button>
+                            <button style="background:transparent; border:none; color:var(--info); cursor:pointer; margin-right:8px;" onclick="editDraft(${index})" title="Edit (Disabled for automated transfers)" ${isAutoTrans ? 'disabled style="opacity:0.2"' : ''}><i class="fas fa-edit"></i></button>
                             <button style="background:transparent; border:none; color:var(--danger); cursor:pointer;" onclick="removeDraft(${index})"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
@@ -1053,7 +1115,7 @@
             document.getElementById('entry-prod').value = op.itemCode;
             document.getElementById('entry-type').value = op.type;
             document.getElementById('entry-qty').value = op.qty;
-            document.getElementById('entry-notes').value = op.notes;
+            document.getElementById('entry-notes').value = op.notes.replace(/\[Auto: .*?\] /g, '');
             handleTxTypeChange();
             
             document.getElementById('edit-draft-index').value = index;
